@@ -8,6 +8,37 @@ if (isset($_GET['logout'])) { session_destroy(); header("Location: login.php"); 
 
 $host = "db"; $user = "root"; $pass = "rootsecurepwd123"; $db = "cinema_dw";
 
+// API BARU UNTUK MEMPROSES PEMBELIAN TIKET ASLI DARI UI
+if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
+    header('Content-Type: application/json');
+    try {
+        $conn = new mysqli($host, $user, $pass, $db);
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        $judul = $conn->real_escape_string($data['judul']);
+        $studio = $conn->real_escape_string($data['studio']);
+        $qty = (int)$data['qty'];
+        $total = (int)$data['total'];
+        
+        // Cari ID Film berdasarkan judul, jika tidak ketemu set default
+        $res_film = $conn->query("SELECT id_film FROM dim_film WHERE judul_film LIKE '%$judul%' LIMIT 1");
+        $id_film = ($res_film->num_rows > 0) ? $res_film->fetch_assoc()['id_film'] : rand(1,6);
+
+        // Cari ID Tipe Studio berdasarkan nama, jika tidak ketemu set default
+        $res_tipe = $conn->query("SELECT id_tipe FROM dim_tipe_tiket WHERE nama_tipe LIKE '%$studio%' LIMIT 1");
+        $id_tipe = ($res_tipe->num_rows > 0) ? $res_tipe->fetch_assoc()['id_tipe'] : rand(1,8);
+
+        // Simpan ke database
+        $conn->query("INSERT INTO fakta_penjualan (id_film, id_cabang, id_tipe, jumlah_tiket, total_pendapatan, waktu_transaksi) 
+                      VALUES ($id_film, 1, $id_tipe, $qty, $total, NOW())");
+
+        echo json_encode(["success" => true]);
+    } catch (Exception $e) { 
+        echo json_encode(["success" => false, "error" => $e->getMessage()]); 
+    }
+    exit;
+}
+
 if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     header('Content-Type: application/json');
     $out = ["success"=>true, "kpi"=>["rev"=>0, "visitor"=>0, "rows"=>0], "table"=>[], "chart_studio"=>[], "chart_film"=>[]];
@@ -15,12 +46,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     try {
         $conn = new mysqli($host, $user, $pass, $db);
         
-        $r_film = rand(1, 6); $r_cabang = rand(1, 3); $r_tipe = rand(1, 8); $r_qty = rand(1, 5);
-        $get_harga = $conn->query("SELECT harga FROM dim_tipe_tiket WHERE id_tipe = $r_tipe")->fetch_assoc();
-        $total = $r_qty * $get_harga['harga'];
-        $conn->query("INSERT INTO fakta_penjualan (id_film, id_cabang, id_tipe, jumlah_tiket, total_pendapatan, waktu_transaksi) 
-                      VALUES ($r_film, $r_cabang, $r_tipe, $r_qty, $total, NOW())");
-
         $timeframe = isset($_GET['time']) ? $_GET['time'] : 'today';
         $time_cond = "DATE(p.waktu_transaksi) = CURDATE()"; 
         if ($timeframe == 'weekly') $time_cond = "p.waktu_transaksi >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
@@ -144,7 +169,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
   (function() {
-    var u="//localhost:8081/";
+    var u="//157.245.202.71:3081/";
     _paq.push(['setTrackerUrl', u+'matomo.php']);
     _paq.push(['setSiteId', '1']);
     var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
@@ -241,7 +266,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     for(let i=1; i<=7; i++) {
                         document.write(`
                         <div class="col-md-3">
-                            <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-red); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('Studio ${i}', 40000, false)" onmouseover="this.style.background='#1a1a1a'; this.style.transform='translateY(-5px)';" onmouseout="this.style.background='#111'; this.style.transform='translateY(0)';">
+                            <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-red); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('Studio ${i}', 'TIKET REGULER MANUAL', '-', 40000, false)" onmouseover="this.style.background='#1a1a1a'; this.style.transform='translateY(-5px)';" onmouseout="this.style.background='#111'; this.style.transform='translateY(0)';">
                                 <h4 class="fw-bold text-white mb-3 mt-2">Studio ${i}</h4>
                                 <div class="badge bg-danger fw-bold mb-3 px-3 py-2" style="border-radius:20px; font-size:13px;">Pesan Tiket <i class="fa-solid fa-arrow-right ms-1"></i></div>
                             </div>
@@ -249,7 +274,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     }
                 </script>
                 <div class="col-md-3">
-                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('VVIP Premiere', 120000, true)" onmouseover="this.style.background='#1a1a1a'; this.style.transform='translateY(-5px)';" onmouseout="this.style.background='#111'; this.style.transform='translateY(0)';">
+                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('VVIP Premiere', 'TIKET VVIP MANUAL', '-', 120000, true)" onmouseover="this.style.background='#1a1a1a'; this.style.transform='translateY(-5px)';" onmouseout="this.style.background='#111'; this.style.transform='translateY(0)';">
                         <h4 class="fw-bold text-warning mb-3 mt-2"><i class="fa-solid fa-crown"></i> VVIP Premiere</h4>
                         <div class="badge text-dark fw-bold mb-3 px-3 py-2" style="background: var(--c-gold); border-radius:20px; font-size:13px;">Pesan Tiket VIP <i class="fa-solid fa-arrow-right ms-1"></i></div>
                     </div>
@@ -362,7 +387,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         }, 1000);
 
         // ===============================================
-        // FUNGSI EKSPOR PDF LAPORAN KEUANGAN (BARU)
+        // FUNGSI EKSPOR PDF LAPORAN KEUANGAN
         // ===============================================
         function exportPDF() {
             const btn = document.getElementById('btn-export-pdf');
@@ -496,7 +521,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 let jamHtml = '';
                 m.jam.forEach(j => {
                     let isVvipParam = m.advance ? 'true' : 'false';
-                    jamHtml += `<div class="showtime-btn" onclick="bukaBooking('${m.studio} - ${m.judul} (${j})', ${m.harga}, ${isVvipParam})">${j}</div>`;
+                    jamHtml += `<div class="showtime-btn" onclick="bukaBooking('${m.studio}', '${m.judul}', '${j}', ${m.harga}, ${isVvipParam})">${j}</div>`;
                 });
 
                 containerNow.innerHTML += `
@@ -590,14 +615,22 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         }
         renderMembers();
 
-        // LOGIKA DENAH KURSI
-        let hargaSaatIni = 0; let kursiDipilih = [];
+        // LOGIKA DENAH KURSI & TRANSAKSI
+        let hargaSaatIni = 0; 
+        let kursiDipilih = [];
+        let currentJudulFilm = '';
+        let currentNamaStudio = '';
 
-        function bukaBooking(namaStudio, harga, isVvip) {
-            hargaSaatIni = harga; kursiDipilih = []; 
-            document.getElementById('book-title').innerText = namaStudio;
+        function bukaBooking(studio, judul, jam, harga, isVvip) {
+            hargaSaatIni = harga; 
+            kursiDipilih = []; 
+            currentNamaStudio = studio;
+            currentJudulFilm = judul;
+
+            document.getElementById('book-title').innerText = `${studio} - ${judul} (${jam})`;
             document.getElementById('book-price').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(harga) + ' / Tiket';
             updatePanelBooking(); 
+            
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
             document.getElementById('view-booking').style.display = 'block';
 
@@ -650,11 +683,47 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
         function prosesTiket() {
             if(kursiDipilih.length === 0) { alert("Pilih minimal 1 kursi terlebih dahulu!"); return; }
-            alert(`Berhasil! Tiket sedang dicetak untuk kursi: ${kursiDipilih.join(', ')}.\nTotal tagihan: ${document.getElementById('lbl-total').innerText}`);
-            switchView('view-jadwal', document.querySelector('.menu-item:nth-child(2)'));
+            
+            const btnProses = document.querySelector('.booking-panel .btn-danger');
+            btnProses.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...';
+            btnProses.disabled = true;
+
+            // Siapkan data untuk dikirim ke database
+            const payload = {
+                judul: currentJudulFilm,
+                studio: currentNamaStudio,
+                qty: kursiDipilih.length,
+                total: kursiDipilih.length * hargaSaatIni
+            };
+
+            // Kirim ke API PHP
+            fetch('index.php?action=buy_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>';
+                btnProses.disabled = false;
+                
+                if(data.success) {
+                    alert(`TRANSAKSI BERHASIL!\nTiket dicetak untuk kursi: ${kursiDipilih.join(', ')}.\nTotal Pendapatan bertambah: Rp ${new Intl.NumberFormat('id-ID').format(payload.total)}`);
+                    
+                    fetchData(); // Tarik data terbaru dari database
+                    switchView('view-dashboard', document.querySelector('.menu-item:nth-child(1)')); // Pindah layar ke Dashboard untuk melihat grafik naik!
+                } else {
+                    alert("Gagal memproses tiket ke database!");
+                }
+            })
+            .catch(err => {
+                btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>';
+                btnProses.disabled = false;
+                alert("Terjadi kesalahan jaringan.");
+            });
         }
 
-        // LOGIKA FILTER DAN FETCH TABEL
+        // LOGIKA FILTER DAN FETCH TABEL (DASHBOARD)
         let cStudio = null; let cFilm = null;
         let activeTimeframe = 'today';
 
