@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mbd-mysql-server
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: rootsecurepwd123
+      MYSQL_DATABASE: cinema_dw
+    ports:
+      - "3306:3306"
+    volumes:
+      - cineplex_db_data:/var/lib/mysql
+    networks:
+      - mbd_network
+
+  web-app:
+    build: .
+    container_name: mbd-cineplex-web
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/app
+    depends_on:
+      - db
+    networks:
+      - mbd_network
+
+  # --- INI PENGGANTI UMAMI (MATOMO) ---
+  matomo:
+    image: matomo:latest
+    container_name: mbd-matomo-app
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      MATOMO_DATABASE_HOST: db
+      MATOMO_DATABASE_USERNAME: root
+      MATOMO_DATABASE_PASSWORD: rootsecurepwd123
+      MATOMO_DATABASE_DBNAME: cinema_dw
+    volumes:
+      - matomo_app_data:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - mbd_network
+
+networks:
+  mbd_network:
+
+volumes:
+  cineplex_db_data:
+  matomo_app_data: # <--- Tambahan volume untuk menyimpan pengaturan Matomo
