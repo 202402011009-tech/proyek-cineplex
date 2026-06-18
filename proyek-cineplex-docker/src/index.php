@@ -162,8 +162,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .view-section { display: none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-    <!-- Matomo -->
-<script>
+    <script>
   var _paq = window._paq = window._paq || [];
   /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
   _paq.push(['trackPageView']);
@@ -176,7 +175,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
   })();
 </script>
-<!-- End Matomo Code -->
 </head>
 <body>
 
@@ -713,7 +711,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     fetchData(); // Tarik data terbaru dari database
                     switchView('view-dashboard', document.querySelector('.menu-item:nth-child(1)')); // Pindah layar ke Dashboard untuk melihat grafik naik!
                 } else {
-                    alert("Gagal memproses tiket ke database!");
+                    alert("Gagal memproses tiket! Penyebab: " + data.error);
                 }
             })
             .catch(err => {
