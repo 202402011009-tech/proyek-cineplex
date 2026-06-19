@@ -9,7 +9,6 @@ if (isset($_GET['logout'])) { session_destroy(); header("Location: login.php"); 
 $host = "db"; $user = "root"; $pass = "rootsecurepwd123"; $db = "cinema_dw";
 
 // --- JURUS RAHASIA: AUTO-CREATE DATABASE & TABLES ---
-// Kode ini akan membuat tabel secara otomatis tanpa perlu XAMPP!
 try {
     $conn_init = new mysqli($host, $user, $pass);
     $conn_init->query("CREATE DATABASE IF NOT EXISTS `$db`");
@@ -30,7 +29,7 @@ try {
 } catch (Exception $e) { /* Abaikan jika sudah ada */ }
 // ----------------------------------------------------
 
-// API BARU UNTUK MEMPROSES PEMBELIAN TIKET ASLI DARI UI
+// API UNTUK MEMPROSES PEMBELIAN TIKET MANUAL DARI UI
 if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
     header('Content-Type: application/json');
     try {
@@ -50,7 +49,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
         $res_tipe = $conn->query("SELECT id_tipe FROM dim_tipe_tiket WHERE nama_tipe LIKE '%$studio%' LIMIT 1");
         $id_tipe = ($res_tipe->num_rows > 0) ? $res_tipe->fetch_assoc()['id_tipe'] : 1;
 
-        // Simpan ke database
+        // Simpan transaksi manual ke database
         $conn->query("INSERT INTO fakta_penjualan (id_film, id_cabang, id_tipe, jumlah_tiket, total_pendapatan, waktu_transaksi) 
                       VALUES ($id_film, 1, $id_tipe, $qty, $total, NOW())");
 
@@ -61,6 +60,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
     exit;
 }
 
+// API UNTUK MENGAMBIL DATA DASHBOARD (DAN MENJALANKAN BOT PEMBELI)
 if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     header('Content-Type: application/json');
     $out = ["success"=>true, "kpi"=>["rev"=>0, "visitor"=>0, "rows"=>0], "table"=>[], "chart_studio"=>[], "chart_film"=>[]];
@@ -68,6 +68,19 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     try {
         $conn = new mysqli($host, $user, $pass, $db);
         
+        // --- FITUR BOT PEMBELI OTOMATIS DI LATAR BELAKANG ---
+        // (Akan menambahkan tiket setiap kali dashboard direfresh, kecuali saat export PDF)
+        if (!isset($_GET['limit']) || $_GET['limit'] != 'all') {
+            $r_film = rand(1, 8); $r_cabang = rand(1, 3); $r_tipe = rand(1, 8); $r_qty = rand(1, 3);
+            $get_harga = $conn->query("SELECT harga FROM dim_tipe_tiket WHERE id_tipe = $r_tipe");
+            if ($get_harga && $get_harga->num_rows > 0) {
+                $total = $r_qty * $get_harga->fetch_assoc()['harga'];
+                $conn->query("INSERT INTO fakta_penjualan (id_film, id_cabang, id_tipe, jumlah_tiket, total_pendapatan, waktu_transaksi) 
+                              VALUES ($r_film, $r_cabang, $r_tipe, $r_qty, $total, NOW())");
+            }
+        }
+        // ----------------------------------------------------
+
         $timeframe = isset($_GET['time']) ? $_GET['time'] : 'today';
         $time_cond = "DATE(p.waktu_transaksi) = CURDATE()"; 
         if ($timeframe == 'weekly') $time_cond = "p.waktu_transaksi >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
@@ -80,7 +93,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         $out['kpi']['visitor'] = (int)$kpi['v'];
         $out['kpi']['rows'] = (int)$kpi['c'];
 
-        // Cek apakah request dari tombol Export PDF
         $limit_clause = "LIMIT 15";
         if (isset($_GET['limit']) && $_GET['limit'] == 'all') {
             $limit_clause = ""; 
@@ -701,7 +713,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     else { cFilm = new Chart(document.getElementById('filmChart'), { type: 'doughnut', data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} } }); }
                 });
         }
-        fetchData(); setInterval(fetchData, 3000); 
+        
+        // Dipercepat menjadi setiap 2 detik!
+        fetchData(); setInterval(fetchData, 2000); 
     </script>
 </body>
 </html>
