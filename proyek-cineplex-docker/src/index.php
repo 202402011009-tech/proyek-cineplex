@@ -8,6 +8,28 @@ if (isset($_GET['logout'])) { session_destroy(); header("Location: login.php"); 
 
 $host = "db"; $user = "root"; $pass = "rootsecurepwd123"; $db = "cinema_dw";
 
+// --- JURUS RAHASIA: AUTO-CREATE DATABASE & TABLES ---
+// Kode ini akan membuat tabel secara otomatis tanpa perlu XAMPP!
+try {
+    $conn_init = new mysqli($host, $user, $pass);
+    $conn_init->query("CREATE DATABASE IF NOT EXISTS `$db`");
+    $conn_init->select_db($db);
+
+    $conn_init->query("CREATE TABLE IF NOT EXISTS dim_film (id_film INT AUTO_INCREMENT PRIMARY KEY, judul_film VARCHAR(100))");
+    $conn_init->query("CREATE TABLE IF NOT EXISTS dim_tipe_tiket (id_tipe INT AUTO_INCREMENT PRIMARY KEY, nama_tipe VARCHAR(50), harga INT)");
+    $conn_init->query("CREATE TABLE IF NOT EXISTS dim_cabang (id_cabang INT AUTO_INCREMENT PRIMARY KEY, nama_cabang VARCHAR(50), kota_cabang VARCHAR(50))");
+    $conn_init->query("CREATE TABLE IF NOT EXISTS fakta_penjualan (id_fakta INT AUTO_INCREMENT PRIMARY KEY, id_film INT, id_cabang INT, id_tipe INT, jumlah_tiket INT, total_pendapatan INT, waktu_transaksi DATETIME)");
+
+    $cek = $conn_init->query("SELECT COUNT(*) as c FROM dim_film")->fetch_assoc()['c'];
+    if($cek == 0) {
+        $conn_init->query("INSERT INTO dim_film (judul_film) VALUES ('FAST X'), ('JOHN WICK: CHAPTER 4'), ('OPPENHEIMER'), ('THE SUPER MARIO BROS'), ('EVIL DEAD RISE'), ('GUARDIANS OF THE GALAXY 3'), ('SPIDER-MAN: ACROSS THE SPIDER-VERSE'), ('MISSION: IMPOSSIBLE - DEAD RECKONING')");
+        $conn_init->query("INSERT INTO dim_tipe_tiket (nama_tipe, harga) VALUES ('Studio 1', 40000), ('Studio 2', 40000), ('Studio 3', 45000), ('Studio 4', 45000), ('Studio 5', 50000), ('Studio 6', 50000), ('Studio 7', 55000), ('VVIP Premiere', 120000)");
+        $conn_init->query("INSERT INTO dim_cabang (nama_cabang, kota_cabang) VALUES ('Cineplex Pusat', 'Jakarta'), ('Cineplex Cabang', 'Bandung'), ('Cineplex East', 'Surabaya')");
+    }
+    $conn_init->close();
+} catch (Exception $e) { /* Abaikan jika sudah ada */ }
+// ----------------------------------------------------
+
 // API BARU UNTUK MEMPROSES PEMBELIAN TIKET ASLI DARI UI
 if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
     header('Content-Type: application/json');
@@ -20,13 +42,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
         $qty = (int)$data['qty'];
         $total = (int)$data['total'];
         
-        // Cari ID Film berdasarkan judul, jika tidak ketemu set default
+        // Cari ID Film
         $res_film = $conn->query("SELECT id_film FROM dim_film WHERE judul_film LIKE '%$judul%' LIMIT 1");
-        $id_film = ($res_film->num_rows > 0) ? $res_film->fetch_assoc()['id_film'] : rand(1,6);
+        $id_film = ($res_film->num_rows > 0) ? $res_film->fetch_assoc()['id_film'] : 1;
 
-        // Cari ID Tipe Studio berdasarkan nama, jika tidak ketemu set default
+        // Cari ID Studio
         $res_tipe = $conn->query("SELECT id_tipe FROM dim_tipe_tiket WHERE nama_tipe LIKE '%$studio%' LIMIT 1");
-        $id_tipe = ($res_tipe->num_rows > 0) ? $res_tipe->fetch_assoc()['id_tipe'] : rand(1,8);
+        $id_tipe = ($res_tipe->num_rows > 0) ? $res_tipe->fetch_assoc()['id_tipe'] : 1;
 
         // Simpan ke database
         $conn->query("INSERT INTO fakta_penjualan (id_film, id_cabang, id_tipe, jumlah_tiket, total_pendapatan, waktu_transaksi) 
@@ -58,7 +80,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         $out['kpi']['visitor'] = (int)$kpi['v'];
         $out['kpi']['rows'] = (int)$kpi['c'];
 
-        // Cek apakah request dari tombol Export PDF (Limit dihapus agar semua data terunduh)
+        // Cek apakah request dari tombol Export PDF
         $limit_clause = "LIMIT 15";
         if (isset($_GET['limit']) && $_GET['limit'] == 'all') {
             $limit_clause = ""; 
@@ -91,7 +113,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
@@ -164,7 +185,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     </style>
     <script>
   var _paq = window._paq = window._paq || [];
-  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
   (function() {
@@ -250,7 +270,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 <i class="fa-solid fa-file-invoice-dollar mb-4" style="font-size: 60px; color: #fff;"></i>
                 <h3 class="fw-bold text-white">Modul Laporan Keuangan</h3>
                 <p class="text-white fw-bold mb-5">Cetak laporan laba rugi, rekapan tiket, dan total pendapatan secara detail.</p>
-                
                 <button id="btn-export-pdf" class="btn btn-outline-danger me-3 px-4 py-2 fw-bold" onclick="exportPDF()">
                     <i class="fa-solid fa-file-pdf"></i> Export PDF Laporan
                 </button>
@@ -384,18 +403,12 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             document.getElementById('live-date').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
         }, 1000);
 
-        // ===============================================
-        // FUNGSI EKSPOR PDF LAPORAN KEUANGAN
-        // ===============================================
         function exportPDF() {
             const btn = document.getElementById('btn-export-pdf');
             const originalText = btn.innerHTML;
-            
-            // Ubah tombol jadi loading
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses PDF...';
             btn.disabled = true;
 
-            // Panggil API dengan parameter limit=all agar semua data terunduh
             fetch(`index.php?action=get_data&time=${activeTimeframe}&limit=all`)
                 .then(r => r.json())
                 .then(d => {
@@ -407,86 +420,41 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
 
-                    // --- 1. Desain Header Laporan ---
-                    doc.setFontSize(18);
-                    doc.setTextColor(229, 9, 20); // Merah Cineplex
-                    doc.setFont(undefined, 'bold');
+                    doc.setFontSize(18); doc.setTextColor(229, 9, 20); doc.setFont(undefined, 'bold');
                     doc.text("LAPORAN KEUANGAN CINEPLEX HQ", 14, 22);
 
-                    doc.setFontSize(11);
-                    doc.setTextColor(100, 100, 100); // Abu-abu
-                    doc.setFont(undefined, 'normal');
-                    
-                    // Ambil rentang waktu yang sedang aktif di dashboard
+                    doc.setFontSize(11); doc.setTextColor(100, 100, 100); doc.setFont(undefined, 'normal');
                     let lbl = document.getElementById('lbl-time1').innerText || '(Hari Ini)';
                     doc.text("Periode Laporan: " + lbl, 14, 30);
                     doc.text("Tanggal Dicetak: " + new Date().toLocaleString('id-ID'), 14, 36);
                     doc.text("Total Transaksi: " + d.kpi.rows + " TRX", 14, 42);
 
-                    // --- 2. Siapkan Data Tabel ---
                     let tableData = [];
                     d.table.forEach((r, index) => {
                         let jam = new Date(r.waktu_transaksi).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
                         let tgl = new Date(r.waktu_transaksi).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
-                        
-                        tableData.push([
-                            index + 1,
-                            `${tgl} ${jam}`,
-                            r.judul_film,
-                            r.nama_tipe,
-                            r.jumlah_tiket + " Tkt",
-                            "Rp " + new Intl.NumberFormat('id-ID').format(r.total_pendapatan)
-                        ]);
+                        tableData.push([ index + 1, `${tgl} ${jam}`, r.judul_film, r.nama_tipe, r.jumlah_tiket + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(r.total_pendapatan) ]);
                     });
 
-                    // --- 3. Tambahkan Baris TOTAL KESELURUHAN Paling Bawah ---
-                    tableData.push([
-                        "", "", "", "TOTAL KESELURUHAN", 
-                        d.kpi.visitor + " Tkt", 
-                        "Rp " + new Intl.NumberFormat('id-ID').format(d.kpi.rev)
-                    ]);
+                    tableData.push([ "", "", "", "TOTAL KESELURUHAN", d.kpi.visitor + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(d.kpi.rev) ]);
 
-                    // --- 4. Render Tabel ke PDF ---
                     doc.autoTable({
-                        startY: 50,
-                        head: [['No', 'Waktu Transaksi', 'Judul Film', 'Studio', 'Tiket', 'Pendapatan']],
-                        body: tableData,
-                        theme: 'grid',
-                        headStyles: { fillColor: [229, 9, 20], textColor: [255, 255, 255], fontStyle: 'bold' }, // Header Merah
-                        footStyles: { fillColor: [34, 34, 34] },
+                        startY: 50, head: [['No', 'Waktu Transaksi', 'Judul Film', 'Studio', 'Tiket', 'Pendapatan']], body: tableData, theme: 'grid',
+                        headStyles: { fillColor: [229, 9, 20], textColor: [255, 255, 255], fontStyle: 'bold' }, footStyles: { fillColor: [34, 34, 34] },
                         didParseCell: function (data) {
                             var rows = data.table.body;
-                            // Logika khusus mewarnai baris terakhir (Total Keseluruhan)
                             if (data.row.index === rows.length - 1) { 
-                                data.cell.styles.fontStyle = 'bold';
-                                data.cell.styles.fillColor = [20, 20, 20]; // Background hitam
-                                if(data.column.index >= 3) {
-                                    data.cell.styles.textColor = [212, 175, 55]; // Warna Teks Emas (Gold)
-                                } else {
-                                    data.cell.styles.textColor = [255, 255, 255]; // Teks Putih
-                                }
+                                data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [20, 20, 20];
+                                data.cell.styles.textColor = (data.column.index >= 3) ? [212, 175, 55] : [255, 255, 255];
                             }
                         }
                     });
 
-                    // --- 5. Download File PDF ---
                     doc.save(`Laporan_Keuangan_Cineplex_${activeTimeframe}.pdf`);
-                    
-                    // Kembalikan tombol seperti semula
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                })
-                .catch(err => {
-                    alert("Terjadi kesalahan sistem saat mengekspor PDF.");
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
+                    btn.innerHTML = originalText; btn.disabled = false;
+                }).catch(err => { alert("Terjadi kesalahan sistem saat mengekspor PDF."); btn.innerHTML = originalText; btn.disabled = false; });
         }
 
-
-        // ===============================================
-        // LOGIKA JADWAL TAYANG (POSTER FILM LOCAL)
-        // ===============================================
         const jadwalData = [
             { judul: "FAST X", poster: "img/fast.jpg", durasi: "2h 21m", rating: "13+", tipe: "2D", studio: "Studio 1", harga: 40000, jam: ["12:15", "14:40", "17:05", "19:30"], advance: false },
             { judul: "JOHN WICK: CHAPTER 4", poster: "img/johnwick.jpg", durasi: "2h 49m", rating: "17+", tipe: "2D", studio: "Studio 2", harga: 40000, jam: ["12:00", "15:10", "18:20", "21:30"], advance: false },
@@ -566,7 +534,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         }
         renderJadwal();
 
-        // LOGIKA MEMBER
         let membersData = [
             { id: '#MBR-9012', nama: 'Ahmad Fathur', tingkat: 'Gold', badgeColor: 'bg-warning text-dark', poin: '1,200 Pts', status: 'Aktif', statusColor: 'text-success' },
             { id: '#MBR-9013', nama: 'Siti Nurbaya', tingkat: 'Silver', badgeColor: 'bg-secondary text-white', poin: '450 Pts', status: 'Aktif', statusColor: 'text-success' }
@@ -608,22 +575,18 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             membersData.unshift({ id: randomId, nama: nama, tingkat: tingkat, badgeColor: badgeStyle, poin: poinAwal, status: 'Aktif', statusColor: 'text-success' });
             renderMembers();
             var modalInstance = bootstrap.Modal.getInstance(document.getElementById('tambahMemberModal'));
-            modalInstance.hide();
-            document.getElementById('inputNamaMember').value = '';
+            modalInstance.hide(); document.getElementById('inputNamaMember').value = '';
         }
         renderMembers();
 
-        // LOGIKA DENAH KURSI & TRANSAKSI
         let hargaSaatIni = 0; 
         let kursiDipilih = [];
         let currentJudulFilm = '';
         let currentNamaStudio = '';
 
         function bukaBooking(studio, judul, jam, harga, isVvip) {
-            hargaSaatIni = harga; 
-            kursiDipilih = []; 
-            currentNamaStudio = studio;
-            currentJudulFilm = judul;
+            hargaSaatIni = harga; kursiDipilih = []; 
+            currentNamaStudio = studio; currentJudulFilm = judul;
 
             document.getElementById('book-title').innerText = `${studio} - ${judul} (${jam})`;
             document.getElementById('book-price').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(harga) + ' / Tiket';
@@ -686,44 +649,21 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             btnProses.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...';
             btnProses.disabled = true;
 
-            // Siapkan data untuk dikirim ke database
-            const payload = {
-                judul: currentJudulFilm,
-                studio: currentNamaStudio,
-                qty: kursiDipilih.length,
-                total: kursiDipilih.length * hargaSaatIni
-            };
+            const payload = { judul: currentJudulFilm, studio: currentNamaStudio, qty: kursiDipilih.length, total: kursiDipilih.length * hargaSaatIni };
 
-            // Kirim ke API PHP
-            fetch('index.php?action=buy_ticket', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
+            fetch('index.php?action=buy_ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
-                btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>';
-                btnProses.disabled = false;
-                
+                btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>'; btnProses.disabled = false;
                 if(data.success) {
                     alert(`TRANSAKSI BERHASIL!\nTiket dicetak untuk kursi: ${kursiDipilih.join(', ')}.\nTotal Pendapatan bertambah: Rp ${new Intl.NumberFormat('id-ID').format(payload.total)}`);
-                    
-                    fetchData(); // Tarik data terbaru dari database
-                    switchView('view-dashboard', document.querySelector('.menu-item:nth-child(1)')); // Pindah layar ke Dashboard untuk melihat grafik naik!
-                } else {
-                    alert("Gagal memproses tiket! Penyebab: " + data.error);
-                }
-            })
-            .catch(err => {
-                btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>';
-                btnProses.disabled = false;
-                alert("Terjadi kesalahan jaringan.");
-            });
+                    fetchData(); 
+                    switchView('view-dashboard', document.querySelector('.menu-item:nth-child(1)')); 
+                } else { alert("Gagal memproses tiket! Penyebab: " + data.error); }
+            }).catch(err => { btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>'; btnProses.disabled = false; alert("Terjadi kesalahan jaringan."); });
         }
 
-        // LOGIKA FILTER DAN FETCH TABEL (DASHBOARD)
-        let cStudio = null; let cFilm = null;
-        let activeTimeframe = 'today';
+        let cStudio = null; let cFilm = null; let activeTimeframe = 'today';
 
         function setFilter(time, btn) {
             activeTimeframe = time;
@@ -731,14 +671,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             if(btn) btn.classList.add('active');
             
             let lbl = '';
-            if(time === 'today') lbl = '(Hari Ini)';
-            else if(time === 'weekly') lbl = '(7 Hari)';
-            else if(time === 'monthly') lbl = '(1 Bulan)';
-            else if(time === 'yearly') lbl = '(1 Tahun)';
-            else if(time === '5years') lbl = '(5 Tahun)';
-            
-            document.getElementById('lbl-time1').innerText = lbl;
-            fetchData();
+            if(time === 'today') lbl = '(Hari Ini)'; else if(time === 'weekly') lbl = '(7 Hari)'; else if(time === 'monthly') lbl = '(1 Bulan)'; else if(time === 'yearly') lbl = '(1 Tahun)'; else if(time === '5years') lbl = '(5 Tahun)';
+            document.getElementById('lbl-time1').innerText = lbl; fetchData();
         }
 
         function fetchData() {
@@ -755,43 +689,19 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     d.table.forEach(r => {
                         let jam = new Date(r.waktu_transaksi).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
                         let tgl = new Date(r.waktu_transaksi).toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
-                        
-                        tbody.innerHTML += `<tr>
-                            <td class="text-white fw-bold">${tgl} ${jam}</td>
-                            <td class="text-white fw-bold">${r.judul_film}</td>
-                            <td><span class="badge-studio fw-bold text-white">${r.nama_tipe}</span></td>
-                            <td class="text-white fw-bold"><i class="fa-solid fa-location-dot text-danger"></i> ${r.kota_cabang}</td>
-                            <td class="text-white fw-bold">${r.jumlah_tiket} Tkt</td>
-                            <td class="text-gold fw-bold">Rp ${new Intl.NumberFormat('id-ID').format(r.total_pendapatan)}</td>
-                        </tr>`;
+                        tbody.innerHTML += `<tr><td class="text-white fw-bold">${tgl} ${jam}</td><td class="text-white fw-bold">${r.judul_film}</td><td><span class="badge-studio fw-bold text-white">${r.nama_tipe}</span></td><td class="text-white fw-bold"><i class="fa-solid fa-location-dot text-danger"></i> ${r.kota_cabang}</td><td class="text-white fw-bold">${r.jumlah_tiket} Tkt</td><td class="text-gold fw-bold">Rp ${new Intl.NumberFormat('id-ID').format(r.total_pendapatan)}</td></tr>`;
                     });
 
-                    let stLab = d.chart_studio.map(x=>x.nama_tipe);
-                    let stVal = d.chart_studio.map(x=>x.total);
+                    let stLab = d.chart_studio.map(x=>x.nama_tipe); let stVal = d.chart_studio.map(x=>x.total);
                     if(cStudio) { cStudio.data.labels=stLab; cStudio.data.datasets[0].data=stVal; cStudio.update(); }
-                    else {
-                        cStudio = new Chart(document.getElementById('studioChart'), {
-                            type: 'bar',
-                            data: { labels: stLab, datasets: [{ label: 'Pendapatan', data: stVal, backgroundColor: '#e50914', borderRadius: 4 }] },
-                            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#222'}}, x:{grid:{display:false}} } }
-                        });
-                    }
+                    else { cStudio = new Chart(document.getElementById('studioChart'), { type: 'bar', data: { labels: stLab, datasets: [{ label: 'Pendapatan', data: stVal, backgroundColor: '#e50914', borderRadius: 4 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#222'}}, x:{grid:{display:false}} } } }); }
 
-                    let flLab = d.chart_film.map(x=>x.judul_film);
-                    let flVal = d.chart_film.map(x=>x.v);
+                    let flLab = d.chart_film.map(x=>x.judul_film); let flVal = d.chart_film.map(x=>x.v);
                     if(cFilm) { cFilm.data.labels=flLab; cFilm.data.datasets[0].data=flVal; cFilm.update(); }
-                    else {
-                        cFilm = new Chart(document.getElementById('filmChart'), {
-                            type: 'doughnut',
-                            data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] },
-                            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} }
-                        });
-                    }
+                    else { cFilm = new Chart(document.getElementById('filmChart'), { type: 'doughnut', data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} } }); }
                 });
         }
-
-        fetchData();
-        setInterval(fetchData, 3000); 
+        fetchData(); setInterval(fetchData, 3000); 
     </script>
 </body>
 </html>
