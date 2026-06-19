@@ -69,7 +69,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         $conn = new mysqli($host, $user, $pass, $db);
         
         // --- FITUR BOT PEMBELI OTOMATIS DI LATAR BELAKANG ---
-        // (Akan menambahkan tiket setiap kali dashboard direfresh, kecuali saat export PDF)
         if (!isset($_GET['limit']) || $_GET['limit'] != 'all') {
             $r_film = rand(1, 8); $r_cabang = rand(1, 3); $r_tipe = rand(1, 8); $r_qty = rand(1, 3);
             $get_harga = $conn->query("SELECT harga FROM dim_tipe_tiket WHERE id_tipe = $r_tipe");
@@ -163,6 +162,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         /* MENU JADWAL TAYANG & AKAN TAYANG */
         .movie-card { background: var(--bg-card); border-radius: 15px; overflow: hidden; border: 1px solid #222; position: relative; display: flex; flex-direction: column; height: 100%; transition: 0.3s;}
         .movie-card:hover { border-color: var(--c-red); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .movie-poster-container { position: relative; }
         .movie-poster { width: 100%; height: 320px; object-fit: cover; border-bottom: 2px solid var(--c-red); background-color: #222; }
         .advance-badge { position: absolute; top: 15px; left: -5px; background: #00a896; color: white; padding: 5px 15px; font-size: 12px; font-weight: bold; border-radius: 0 15px 15px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2; }
         .advance-badge::after { content: ''; position: absolute; bottom: -5px; left: 0; border-top: 5px solid #00796b; border-left: 5px solid transparent; }
@@ -195,7 +195,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .view-section { display: none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-    <script>
+    <!-- Matomo -->
+<script>
   var _paq = window._paq = window._paq || [];
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
@@ -207,6 +208,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
   })();
 </script>
+<!-- End Matomo Code -->
 </head>
 <body>
 
@@ -367,6 +369,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
+    <!-- MODAL TAMBAH MEMBER -->
     <div class="modal fade" id="tambahMemberModal" tabindex="-1" aria-labelledby="tambahMemberModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background-color: #151515; border: 1px solid #333;">
@@ -394,6 +397,23 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- MODAL TRAILER YOUTUBE (BARU) -->
+    <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-white fw-bold" id="trailerTitle">Trailer Film</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="ratio ratio-16x9">
+                        <iframe id="trailerIframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -467,25 +487,42 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 }).catch(err => { alert("Terjadi kesalahan sistem saat mengekspor PDF."); btn.innerHTML = originalText; btn.disabled = false; });
         }
 
+        // ===============================================
+        // FUNGSI MEMUTAR TRAILER (BARU)
+        // ===============================================
+        function playTrailer(judul, ytId) {
+            document.getElementById('trailerTitle').innerText = 'Trailer: ' + judul;
+            document.getElementById('trailerIframe').src = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1';
+            var trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
+            trailerModal.show();
+        }
+
+        // Matikan video saat modal diclose agar tidak bocor suaranya
+        document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('trailerIframe').src = '';
+        });
+
+
+        // DATABASE FILM + ID YOUTUBE TRAILER (BARU)
         const jadwalData = [
-            { judul: "FAST X", poster: "img/fast.jpg", durasi: "2h 21m", rating: "13+", tipe: "2D", studio: "Studio 1", harga: 40000, jam: ["12:15", "14:40", "17:05", "19:30"], advance: false },
-            { judul: "JOHN WICK: CHAPTER 4", poster: "img/johnwick.jpg", durasi: "2h 49m", rating: "17+", tipe: "2D", studio: "Studio 2", harga: 40000, jam: ["12:00", "15:10", "18:20", "21:30"], advance: false },
-            { judul: "OPPENHEIMER", poster: "img/oppenheimer.jpg", durasi: "3h 0m", rating: "13+", tipe: "2D", studio: "Studio 3", harga: 45000, jam: ["13:00", "16:30", "20:00"], advance: false },
-            { judul: "THE SUPER MARIO BROS", poster: "img/mariobros.jpg", durasi: "1h 32m", rating: "SU", tipe: "2D", studio: "Studio 4", harga: 45000, jam: ["12:30", "14:30", "16:30", "18:30"], advance: false },
-            { judul: "EVIL DEAD RISE", poster: "img/evildead.jpg", durasi: "1h 36m", rating: "17+", tipe: "2D", studio: "Studio 5", harga: 50000, jam: ["13:15", "15:20", "17:30", "19:40"], advance: false },
-            { judul: "GUARDIANS OF THE GALAXY 3", poster: "img/gotg3.jpg", durasi: "2h 30m", rating: "13+", tipe: "2D", studio: "Studio 6", harga: 50000, jam: ["12:45", "15:45", "18:45", "21:45"], advance: false },
-            { judul: "SPIDER-MAN: ACROSS THE SPIDER-VERSE", poster: "img/spiderman.jpg", durasi: "2h 20m", rating: "SU", tipe: "2D", studio: "Studio 7", harga: 55000, jam: ["12:10", "14:50", "17:30", "20:10"], advance: false },
-            { judul: "MISSION: IMPOSSIBLE - DEAD RECKONING", poster: "img/missionimpossible.jpg", durasi: "2h 43m", rating: "13+", tipe: "2D", studio: "VVIP Premiere", harga: 120000, jam: ["13:30", "17:00", "20:30"], advance: true }
+            { judul: "FAST X", poster: "img/fast.jpg", durasi: "2h 21m", rating: "13+", tipe: "2D", studio: "Studio 1", harga: 40000, jam: ["12:15", "14:40", "17:05", "19:30"], advance: false, trailer: "32RAq6LSotU" },
+            { judul: "JOHN WICK: CHAPTER 4", poster: "img/johnwick.jpg", durasi: "2h 49m", rating: "17+", tipe: "2D", studio: "Studio 2", harga: 40000, jam: ["12:00", "15:10", "18:20", "21:30"], advance: false, trailer: "qEVUtrk8_B4" },
+            { judul: "OPPENHEIMER", poster: "img/oppenheimer.jpg", durasi: "3h 0m", rating: "13+", tipe: "2D", studio: "Studio 3", harga: 45000, jam: ["13:00", "16:30", "20:00"], advance: false, trailer: "uYPbbksJxIg" },
+            { judul: "THE SUPER MARIO BROS", poster: "img/mariobros.jpg", durasi: "1h 32m", rating: "SU", tipe: "2D", studio: "Studio 4", harga: 45000, jam: ["12:30", "14:30", "16:30", "18:30"], advance: false, trailer: "TnGl01FkMMo" },
+            { judul: "EVIL DEAD RISE", poster: "img/evildead.jpg", durasi: "1h 36m", rating: "17+", tipe: "2D", studio: "Studio 5", harga: 50000, jam: ["13:15", "15:20", "17:30", "19:40"], advance: false, trailer: "smTK_AehAPQ" },
+            { judul: "GUARDIANS OF THE GALAXY 3", poster: "img/gotg3.jpg", durasi: "2h 30m", rating: "13+", tipe: "2D", studio: "Studio 6", harga: 50000, jam: ["12:45", "15:45", "18:45", "21:45"], advance: false, trailer: "u3V5KDHRQvk" },
+            { judul: "SPIDER-MAN: ACROSS THE SPIDER-VERSE", poster: "img/spiderman.jpg", durasi: "2h 20m", rating: "SU", tipe: "2D", studio: "Studio 7", harga: 55000, jam: ["12:10", "14:50", "17:30", "20:10"], advance: false, trailer: "cqGjhVJWtEg" },
+            { judul: "MISSION: IMPOSSIBLE - DEAD RECKONING", poster: "img/missionimpossible.jpg", durasi: "2h 43m", rating: "13+", tipe: "2D", studio: "VVIP Premiere", harga: 120000, jam: ["13:30", "17:00", "20:30"], advance: true, trailer: "2m1drlOZSDw" }
         ];
 
         const akanTayangData = [
-            { judul: "SEKAWAN LIMO 2: GUNUNG KAWI", poster: "img/sekawanlimo2.jpg", durasi: "2h 2m", rating: "13+", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: true },
-            { judul: "BADUT GENDONG", poster: "img/badutgendong.jpg", durasi: "1h 41m", rating: "17+", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: false },
-            { judul: "CHILDREN OF HEAVEN", poster: "img/childrenofheaven.jpg", durasi: "1h 37m", rating: "SU", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: false },
-            { judul: "STAR WARS: MANDALORIAN & GROGU", poster: "img/starwars.jpg", durasi: "2h 12m", rating: "13+", tipe: "2D", tanggal: "Tayang: 20 Mei 2026", advance: false },
-            { judul: "MOBILE SUIT GUNDAM HATHAWAY", poster: "img/gundam.jpg", durasi: "1h 49m", rating: "13+", tipe: "2D", tanggal: "Tayang: 29 Mei 2026", advance: false },
-            { judul: "COLONY", poster: "img/colony.jpg", durasi: "2h 2m", rating: "13+", tipe: "2D", tanggal: "Tayang: 3 Jun 2026", advance: true },
-            { judul: "MONSTER PABRIK RAMBUT", poster: "img/monsterpabrikrambut.jpg", durasi: "1h 36m", rating: "17+", tipe: "2D", tanggal: "Tayang: 4 Jun 2026", advance: true }
+            { judul: "SEKAWAN LIMO 2: GUNUNG KAWI", poster: "img/sekawanlimo2.jpg", durasi: "2h 2m", rating: "13+", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: true, trailer: "sF2zHn5Bf2E" },
+            { judul: "BADUT GENDONG", poster: "img/badutgendong.jpg", durasi: "1h 41m", rating: "17+", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: false, trailer: "_d_1rL3iW0k" },
+            { judul: "CHILDREN OF HEAVEN", poster: "img/childrenofheaven.jpg", durasi: "1h 37m", rating: "SU", tipe: "2D", tanggal: "Tayang: 27 Mei 2026", advance: false, trailer: "5RqJmCusLqM" },
+            { judul: "STAR WARS: MANDALORIAN & GROGU", poster: "img/starwars.jpg", durasi: "2h 12m", rating: "13+", tipe: "2D", tanggal: "Tayang: 20 Mei 2026", advance: false, trailer: "aZgBdZpQ6gQ" },
+            { judul: "MOBILE SUIT GUNDAM HATHAWAY", poster: "img/gundam.jpg", durasi: "1h 49m", rating: "13+", tipe: "2D", tanggal: "Tayang: 29 Mei 2026", advance: false, trailer: "P1C9509Z59Y" },
+            { judul: "COLONY", poster: "img/colony.jpg", durasi: "2h 2m", rating: "13+", tipe: "2D", tanggal: "Tayang: 3 Jun 2026", advance: true, trailer: "2LqzF5WauAw" },
+            { judul: "MONSTER PABRIK RAMBUT", poster: "img/monsterpabrikrambut.jpg", durasi: "1h 36m", rating: "17+", tipe: "2D", tanggal: "Tayang: 4 Jun 2026", advance: true, trailer: "X2m-08cOAbc" }
         ];
 
         function renderJadwal() {
@@ -512,6 +549,12 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                             <div class="movie-tags">
                                 <span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span>
                             </div>
+                            
+                            <!-- TOMBOL TRAILER BARU -->
+                            <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')">
+                                <i class="fa-solid fa-play me-1"></i> Lihat Trailer
+                            </button>
+
                             <div class="${studioClass}">
                                 ${iconStudio} ${m.studio}
                                 <span class="studio-price">Rp ${new Intl.NumberFormat('id-ID').format(m.harga)}</span>
@@ -536,6 +579,12 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                             <div class="movie-tags">
                                 <span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span>
                             </div>
+                            
+                            <!-- TOMBOL TRAILER BARU -->
+                            <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')">
+                                <i class="fa-solid fa-play me-1"></i> Lihat Trailer
+                            </button>
+
                             <div class="release-date">
                                 <i class="fa-solid fa-calendar-check me-2"></i> ${m.tanggal}
                             </div>
@@ -714,7 +763,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 });
         }
         
-        // Dipercepat menjadi setiap 2 detik!
         fetchData(); setInterval(fetchData, 2000); 
     </script>
 </body>
