@@ -219,6 +219,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         <a class="menu-item" onclick="switchView('view-laporan', this)"><i class="fa-solid fa-file-invoice-dollar"></i> Laporan Keuangan</a>
         <a class="menu-item" onclick="switchView('view-studio', this)"><i class="fa-solid fa-couch"></i> Manajemen Studio</a>
         <a class="menu-item" onclick="switchView('view-member', this)"><i class="fa-solid fa-users"></i> Data Member</a>
+        <!-- TOMBOL MENU F&B BARU -->
+        <a class="menu-item" onclick="switchView('view-fnb', this)"><i class="fa-solid fa-burger"></i> Snack & Minuman</a>
         <a href="?logout=true" class="menu-item text-danger mt-5"><i class="fa-solid fa-power-off"></i> Logout</a>
     </div>
 
@@ -367,6 +369,63 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             </div>
         </div>
 
+        <!-- MENU BARU: F&B (SNACK & MINUMAN) -->
+        <div id="view-fnb" class="view-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="text-white fw-bold m-0">Pemesanan Snack & Minuman (F&B)</h4>
+                <span class="badge bg-warning text-dark p-2 fw-bold">Manual Cashier</span>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);">
+                        <i class="fa-solid fa-cookie-bite" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i>
+                        <h5 class="fw-bold text-white mb-2">Popcorn Caramel</h5>
+                        <p class="text-mut mb-3">Rp 35.000</p>
+                        <button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Caramel', 35000)">+ Tambah</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);">
+                        <i class="fa-solid fa-bowl-food" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i>
+                        <h5 class="fw-bold text-white mb-2">Popcorn Asin (Salty)</h5>
+                        <p class="text-mut mb-3">Rp 30.000</p>
+                        <button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Asin', 30000)">+ Tambah</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;">
+                        <i class="fa-solid fa-mug-hot" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i>
+                        <h5 class="fw-bold text-white mb-2">Coca Cola (L)</h5>
+                        <p class="text-mut mb-3">Rp 20.000</p>
+                        <button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Coca Cola (L)', 20000)">+ Tambah</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;">
+                        <i class="fa-solid fa-bottle-water" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i>
+                        <h5 class="fw-bold text-white mb-2">Air Mineral</h5>
+                        <p class="text-mut mb-3">Rp 10.000</p>
+                        <button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Air Mineral', 10000)">+ Tambah</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Bawah Keranjang F&B -->
+            <div class="booking-panel mt-5">
+                <div>
+                    <h6 class="text-white fw-bold mb-1">Keranjang Anda: <span id="fnb-list" class="text-mut ms-2" style="font-weight: normal; font-size: 14px;">Belum ada pesanan</span></h6>
+                </div>
+                <div class="text-end d-flex align-items-center gap-4">
+                    <div class="text-end">
+                        <h6 class="text-white fw-bold mb-1">Total Makanan</h6>
+                        <h3 class="text-gold fw-bold m-0" id="fnb-total">Rp 0</h3>
+                    </div>
+                    <button class="btn px-4 py-3 fw-bold" onclick="prosesFnb()" style="background: var(--c-gold); color: black; border-radius: 10px;">BAYAR PESANAN <i class="fa-solid fa-cash-register ms-2"></i></button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- MODAL TAMBAH MEMBER -->
@@ -399,7 +458,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
       </div>
     </div>
 
-    <!-- MODAL TRAILER YOUTUBE (BARU) -->
+    <!-- MODAL TRAILER YOUTUBE -->
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary">
@@ -488,7 +547,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         }
 
         // ===============================================
-        // FUNGSI MEMUTAR TRAILER (BARU)
+        // FUNGSI MEMUTAR TRAILER
         // ===============================================
         function playTrailer(judul, ytId) {
             document.getElementById('trailerTitle').innerText = 'Trailer: ' + judul;
@@ -497,13 +556,11 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             trailerModal.show();
         }
 
-        // Matikan video saat modal diclose agar tidak bocor suaranya
         document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () {
             document.getElementById('trailerIframe').src = '';
         });
 
-
-        // DATABASE FILM + ID YOUTUBE TRAILER (BARU)
+        // DATABASE FILM + ID YOUTUBE TRAILER
         const jadwalData = [
             { judul: "FAST X", poster: "img/fast.jpg", durasi: "2h 21m", rating: "13+", tipe: "2D", studio: "Studio 1", harga: 40000, jam: ["12:15", "14:40", "17:05", "19:30"], advance: false, trailer: "32RAq6LSotU" },
             { judul: "JOHN WICK: CHAPTER 4", poster: "img/johnwick.jpg", durasi: "2h 49m", rating: "17+", tipe: "2D", studio: "Studio 2", harga: 40000, jam: ["12:00", "15:10", "18:20", "21:30"], advance: false, trailer: "qEVUtrk8_B4" },
@@ -550,7 +607,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                                 <span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span>
                             </div>
                             
-                            <!-- TOMBOL TRAILER BARU -->
+                            <!-- TOMBOL TRAILER -->
                             <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')">
                                 <i class="fa-solid fa-play me-1"></i> Lihat Trailer
                             </button>
@@ -580,7 +637,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                                 <span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span>
                             </div>
                             
-                            <!-- TOMBOL TRAILER BARU -->
+                            <!-- TOMBOL TRAILER -->
                             <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')">
                                 <i class="fa-solid fa-play me-1"></i> Lihat Trailer
                             </button>
@@ -722,6 +779,34 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     switchView('view-dashboard', document.querySelector('.menu-item:nth-child(1)')); 
                 } else { alert("Gagal memproses tiket! Penyebab: " + data.error); }
             }).catch(err => { btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-print ms-2"></i>'; btnProses.disabled = false; alert("Terjadi kesalahan jaringan."); });
+        }
+
+        // ===============================================
+        // LOGIKA PEMESANAN F&B (BARU)
+        // ===============================================
+        let fnbKeranjang = [];
+        let fnbTotalHarga = 0;
+
+        function tambahFnb(nama, harga) {
+            fnbKeranjang.push(nama);
+            fnbTotalHarga += harga;
+            
+            document.getElementById('fnb-list').innerText = fnbKeranjang.join(', ');
+            document.getElementById('fnb-total').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(fnbTotalHarga);
+        }
+
+        function prosesFnb() {
+            if(fnbKeranjang.length === 0) {
+                alert("Silakan tambah Makanan atau Minuman terlebih dahulu!");
+                return;
+            }
+            alert(`PEMESANAN SNACK BERHASIL!\n\nItem dibeli: ${fnbKeranjang.join(', ')}\nTotal Pembayaran: Rp ${new Intl.NumberFormat('id-ID').format(fnbTotalHarga)}\n\n(Transaksi ini bersifat manual di luar sistem Dashboard).`);
+            
+            // Reset keranjang setelah dibayar
+            fnbKeranjang = [];
+            fnbTotalHarga = 0;
+            document.getElementById('fnb-list').innerText = 'Belum ada pesanan';
+            document.getElementById('fnb-total').innerText = 'Rp 0';
         }
 
         let cStudio = null; let cFilm = null; let activeTimeframe = 'today';
