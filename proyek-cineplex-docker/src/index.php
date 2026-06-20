@@ -68,7 +68,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     try {
         $conn = new mysqli($host, $user, $pass, $db);
         
-        // --- FITUR BOT PEMBELI OTOMATIS DI LATAR BELAKANG ---
         if (!isset($_GET['limit']) || $_GET['limit'] != 'all') {
             $r_film = rand(1, 8); $r_cabang = rand(1, 3); $r_tipe = rand(1, 8); $r_qty = rand(1, 3);
             $get_harga = $conn->query("SELECT harga FROM dim_tipe_tiket WHERE id_tipe = $r_tipe");
@@ -126,21 +125,21 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     
     <style>
         :root { --bg-dark: #0a0a0a; --bg-card: #151515; --c-red: #e50914; --c-gold: #d4af37; --text-main: #ffffff; --text-mut: #888; }
-        body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; overflow: hidden; }
+        body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; overflow: hidden; margin: 0; }
         
-        /* SIDEBAR */
-        .sidebar { width: 260px; background-color: #000; height: 100vh; padding: 20px 0; border-right: 1px solid #222; overflow-y: auto; }
+        /* LAYOUT (Diubah agar tidak tertutup pemutar Spotify di bawah) */
+        .sidebar { width: 260px; background-color: #000; height: calc(100vh - 90px); padding: 20px 0; border-right: 1px solid #222; overflow-y: auto; }
+        .main-content { flex: 1; padding: 30px; height: calc(100vh - 90px); overflow-y: auto; }
+
         .brand-logo { color: var(--c-red); font-size: 24px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: 1px;}
         .menu-item { padding: 15px 25px; color: var(--text-mut); text-decoration: none; display: block; font-weight: 600; transition: 0.3s; cursor: pointer; border-left: 4px solid transparent; }
         .menu-item:hover, .menu-item.active { background: rgba(229,9,20,0.1); color: var(--c-red); border-left: 4px solid var(--c-red); }
         .menu-item i { width: 30px; }
 
-        .main-content { flex: 1; padding: 30px; height: 100vh; overflow-y: auto; }
         .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
         .time-display { font-size: 24px; font-weight: 800; color: var(--c-gold); letter-spacing: 2px;}
         .date-display { font-size: 14px; color: var(--text-mut); text-transform: uppercase; font-weight: bold; }
 
-        /* UI COMPONENTS */
         .filter-group { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
         .btn-filter { background: var(--bg-card); color: var(--text-mut); border: 1px solid #333; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: bold; transition: 0.3s; white-space: nowrap; }
         .btn-filter.active { background: var(--c-red); color: white; border-color: var(--c-red); box-shadow: 0 0 15px rgba(229,9,20,0.4);}
@@ -191,38 +190,38 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .view-section { display: none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TAMPILAN TOMBOL MUSIK MELAYANG */
-        .music-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #e50914;
-            color: white;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            box-shadow: 0 4px 15px rgba(229,9,20,0.6);
-            cursor: pointer;
-            z-index: 9999;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* ========================================================
+           SPOTIFY MUSIC PLAYER STYLE (Di Bagian Bawah Layar)
+           ======================================================== */
+        .spotify-player {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 90px;
+            background-color: #181818; border-top: 1px solid #282828;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 9999; box-sizing: border-box; color: #fff;
         }
-        .music-btn:hover { background: #b0060f; transform: scale(1.1); }
+        .track-info { display: flex; align-items: center; width: 30%; }
+        .track-cover { width: 56px; height: 56px; border-radius: 4px; margin-right: 15px; object-fit: cover; }
+        .track-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 2px; }
+        .track-artist { font-size: 12px; color: #b3b3b3; }
+        .player-controls { display: flex; flex-direction: column; align-items: center; width: 40%; }
+        .control-buttons { display: flex; align-items: center; gap: 20px; margin-bottom: 8px; color: #b3b3b3; font-size: 16px; }
+        .play-pause-btn { 
+            width: 32px; height: 32px; background-color: #fff; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; color: #000; 
+            cursor: default; /* Sesuai request: tidak bisa dipause manual */
+        }
+        .playback-bar { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 11px; color: #a7a7a7; font-weight: bold; }
+        .progress-bar-container { flex-grow: 1; height: 4px; background-color: #535353; border-radius: 2px; position: relative; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: #fff; width: 0%; border-radius: 2px; transition: width 0.5s linear;}
+        .progress-bar-container:hover .progress-bar { background-color: #1ed760; }
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" loop>
-        <source src="https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3" type="audio/mpeg">
-    </audio>
-    <button class="music-btn" id="musicToggleBtn" onclick="toggleMusic()" title="Nyala/Matikan Musik Latar">
-        <i class="fa-solid fa-volume-xmark" id="musicIcon"></i>
-    </button>
+    <!-- YOUTUBE IFRAME UNTUK MUSIK LATAR -->
+    <div id="bg-music-player" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
 
+    <!-- SISI KIRI: MENU SIDEBAR -->
     <div class="sidebar">
         <div class="brand-logo"><i class="fa-solid fa-film"></i> CINEPLEX</div>
         
@@ -246,6 +245,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         <a href="?logout=true" class="menu-item text-danger mt-5"><i class="fa-solid fa-power-off"></i> Logout</a>
     </div>
 
+    <!-- SISI KANAN: KONTEN UTAMA -->
     <div class="main-content">
         <div class="top-header">
             <div>
@@ -259,6 +259,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
 
         <?php if($role == 'admin'): ?>
+        <!-- ======================= BAGIAN KHUSUS ADMIN ======================= -->
         <div id="view-dashboard" class="view-section" style="display: block;">
             <div class="filter-group">
                 <button class="btn-filter active" onclick="setFilter('today', this)">Pendapatan Hari Ini</button>
@@ -351,6 +352,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
         <?php endif; ?>
 
+        <!-- ======================= BAGIAN UMUM (BISA DILIHAT ADMIN & PELANGGAN) ======================= -->
+        
         <div id="view-jadwal" class="view-section" style="display: <?php echo $role == 'customer' ? 'block' : 'none'; ?>;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="text-white fw-bold m-0">Sedang Tayang di Cineplex</h4>
@@ -404,6 +407,49 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
+    <!-- TAMPILAN SPOTIFY PLAYER DI BAWAH (SELALU MUNCUL) -->
+    <div class="spotify-player">
+        <div class="track-info">
+            <!-- Cover dari lagu Ian Asher Way Too Self Aware -->
+            <img src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
+            <div>
+                <div class="track-title">Way Too Self Aware (Official Audio)</div>
+                <div class="track-artist">Ian Asher</div>
+            </div>
+            <i class="fa-solid fa-heart ms-4" style="color: #1ed760; font-size: 18px;"></i>
+        </div>
+        
+        <div class="player-controls">
+            <div class="control-buttons">
+                <i class="fa-solid fa-shuffle" style="color: #1ed760;"></i>
+                <i class="fa-solid fa-backward-step"></i>
+                <!-- Tombol pause hiasan, klik tidak akan berpengaruh -->
+                <div class="play-pause-btn">
+                    <i id="play-icon" class="fa-solid fa-play text-dark"></i>
+                </div>
+                <i class="fa-solid fa-forward-step"></i>
+                <i class="fa-solid fa-repeat" style="color: #1ed760;"></i>
+            </div>
+            <div class="playback-bar">
+                <span id="music-current-time" class="time-current">0:00</span>
+                <div class="progress-bar-container">
+                    <div id="music-progress" class="progress-bar"></div>
+                </div>
+                <span id="music-total-time" class="time-total">2:37</span>
+            </div>
+        </div>
+        
+        <div class="volume-controls text-end pe-4" style="width: 30%; color: #b3b3b3;">
+            <i class="fa-solid fa-list me-3"></i>
+            <i class="fa-solid fa-computer me-3"></i>
+            <i class="fa-solid fa-volume-high me-2"></i>
+            <div style="display:inline-block; width: 80px; height: 4px; background:#535353; border-radius:2px; vertical-align:middle;">
+                <div style="width: 100%; height: 100%; background:#1ed760; border-radius:2px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TRAILER YOUTUBE -->
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary">
@@ -421,7 +467,62 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     </div>
 
     <script>
-        // GLOBAL JS
+        // SCRIPT UNTUK MUSIC PLAYER DARI YOUTUBE (IAN ASHER)
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var bgMusicPlayer;
+        var isMusicPlaying = false;
+        var wasPlayingBeforeTrailer = false;
+
+        function onYouTubeIframeAPIReady() {
+            bgMusicPlayer = new YT.Player('bg-music-player', {
+                videoId: 'gpi25y0hLr8', // ID Youtube Ian Asher
+                playerVars: { 'autoplay': 0, 'loop': 1, 'playlist': 'gpi25y0hLr8', 'controls': 0 },
+                events: {
+                    'onStateChange': function(event) {
+                        if(event.data == YT.PlayerState.PLAYING) {
+                            isMusicPlaying = true;
+                            document.getElementById('play-icon').classList.replace('fa-play', 'fa-pause');
+                        } else if(event.data == YT.PlayerState.PAUSED) {
+                            isMusicPlaying = false;
+                            document.getElementById('play-icon').classList.replace('fa-pause', 'fa-play');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Trik browser: Musik otomatis menyala saat user klik apa saja di layar
+        window.addEventListener('click', function initAudio() {
+            if(!isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') {
+                bgMusicPlayer.playVideo();
+                // Hapus event listener agar tidak bentrok
+                window.removeEventListener('click', initAudio);
+            }
+        });
+
+        // Update garis detik Spotify Player
+        setInterval(() => {
+            if(isMusicPlaying && bgMusicPlayer && bgMusicPlayer.getCurrentTime) {
+                let current = bgMusicPlayer.getCurrentTime();
+                let duration = bgMusicPlayer.getDuration();
+                if(duration > 0) {
+                    let pct = (current / duration) * 100;
+                    document.getElementById('music-progress').style.width = pct + '%';
+                    
+                    let cMin = Math.floor(current / 60); let cSec = Math.floor(current % 60).toString().padStart(2, '0');
+                    document.getElementById('music-current-time').innerText = cMin + ':' + cSec;
+                    
+                    let dMin = Math.floor(duration / 60); let dSec = Math.floor(duration % 60).toString().padStart(2, '0');
+                    document.getElementById('music-total-time').innerText = dMin + ':' + dSec;
+                }
+            }
+        }, 1000);
+
+        // GLOBAL JS MENU
         function switchView(viewId, element) {
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
@@ -438,45 +539,17 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             document.getElementById('live-date').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
         }, 1000);
 
-        // ===============================================
-        // LOGIKA PEMUTAR MUSIK LATAR & TRAILER
-        // ===============================================
-        var bgMusic = document.getElementById("bg-music");
-        var musicIcon = document.getElementById("musicIcon");
-        var isMusicPlaying = false;
-
-        // Fungsi manual menyalakan/mematikan musik dari tombol
-        function toggleMusic() {
-            if(isMusicPlaying) {
-                bgMusic.pause();
-                musicIcon.classList.remove('fa-volume-high');
-                musicIcon.classList.add('fa-volume-xmark');
-                isMusicPlaying = false;
-            } else {
-                bgMusic.play().then(() => {
-                    musicIcon.classList.remove('fa-volume-xmark');
-                    musicIcon.classList.add('fa-volume-high');
-                    isMusicPlaying = true;
-                }).catch(err => { console.log("Gagal memutar musik otomatis"); });
-            }
-        }
-
-        // Fitur menyalakan musik otomatis saat pertama kali user klik layarnya
-        window.addEventListener('click', function initAudio() {
-            if(!isMusicPlaying) {
-                toggleMusic();
-            }
-            window.removeEventListener('click', initAudio);
-        }, {once: true});
-
-
+        // LOGIKA TRAILER PINTAR
         function playTrailer(judul, ytId) {
             document.getElementById('trailerTitle').innerText = 'Trailer: ' + judul;
             document.getElementById('trailerIframe').src = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1';
             
-            // JEDA MUSIK LATAR SAAT TRAILER DIBUKA (Cerdas!)
-            if(isMusicPlaying) { 
-                bgMusic.pause(); 
+            // Matikan lagu spotify sementara saat trailer dibuka
+            if(isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.pauseVideo === 'function') { 
+                wasPlayingBeforeTrailer = true;
+                bgMusicPlayer.pauseVideo(); 
+            } else {
+                wasPlayingBeforeTrailer = false;
             }
 
             var trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
@@ -485,10 +558,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
         document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () { 
             document.getElementById('trailerIframe').src = ''; 
-            
-            // LANJUTKAN MUSIK LATAR SAAT TRAILER DITUTUP
-            if(isMusicPlaying) { 
-                bgMusic.play(); 
+            // Nyalakan kembali lagu spotify otomatis
+            if(wasPlayingBeforeTrailer && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') { 
+                bgMusicPlayer.playVideo(); 
             }
         });
 
@@ -521,30 +593,17 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 let badgeAdvance = m.advance ? `<div class="advance-badge">Advance ticket sales</div>` : '';
                 let studioClass = m.advance ? 'studio-name vvip' : 'studio-name';
                 let iconStudio = m.advance ? '<i class="fa-solid fa-crown me-1"></i>' : '<i class="fa-solid fa-desktop me-1"></i>';
-                
                 let jamHtml = '';
-                m.jam.forEach(j => {
-                    let isVvipParam = m.advance ? 'true' : 'false';
-                    jamHtml += `<div class="showtime-btn" onclick="bukaBooking('${m.studio}', '${m.judul}', '${j}', ${m.harga}, ${isVvipParam})">${j}</div>`;
-                });
+                m.jam.forEach(j => { let isVvipParam = m.advance ? 'true' : 'false'; jamHtml += `<div class="showtime-btn" onclick="bukaBooking('${m.studio}', '${m.judul}', '${j}', ${m.harga}, ${isVvipParam})">${j}</div>`; });
 
-                containerNow.innerHTML += `
-                <div class="col-md-3"><div class="movie-card">${badgeAdvance}<img src="${m.poster}" class="movie-poster" alt="${m.judul}"><div class="movie-info">
-                <div class="movie-title">${m.judul}</div><div class="movie-tags"><span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span></div>
-                <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')"><i class="fa-solid fa-play me-1"></i> Lihat Trailer</button>
-                <div class="${studioClass}">${iconStudio} ${m.studio}<span class="studio-price">Rp ${new Intl.NumberFormat('id-ID').format(m.harga)}</span></div>
-                <div class="showtime-grid">${jamHtml}</div></div></div></div>`;
+                containerNow.innerHTML += `<div class="col-md-3"><div class="movie-card">${badgeAdvance}<img src="${m.poster}" class="movie-poster" alt="${m.judul}"><div class="movie-info"><div class="movie-title">${m.judul}</div><div class="movie-tags"><span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span></div><button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')"><i class="fa-solid fa-play me-1"></i> Lihat Trailer</button><div class="${studioClass}">${iconStudio} ${m.studio}<span class="studio-price">Rp ${new Intl.NumberFormat('id-ID').format(m.harga)}</span></div><div class="showtime-grid">${jamHtml}</div></div></div></div>`;
             });
 
             const containerSoon = document.getElementById('coming-soon-container');
             containerSoon.innerHTML = '';
             akanTayangData.forEach(m => {
                 let badgeAdvance = m.advance ? `<div class="advance-badge">Advance ticket sales</div>` : '';
-                containerSoon.innerHTML += `
-                <div class="col-md-3"><div class="movie-card">${badgeAdvance}<img src="${m.poster}" class="movie-poster" alt="${m.judul}"><div class="movie-info">
-                <div class="movie-title">${m.judul}</div><div class="movie-tags"><span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span></div>
-                <button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')"><i class="fa-solid fa-play me-1"></i> Lihat Trailer</button>
-                <div class="release-date"><i class="fa-solid fa-calendar-check me-2"></i> ${m.tanggal}</div></div></div></div>`;
+                containerSoon.innerHTML += `<div class="col-md-3"><div class="movie-card">${badgeAdvance}<img src="${m.poster}" class="movie-poster" alt="${m.judul}"><div class="movie-info"><div class="movie-title">${m.judul}</div><div class="movie-tags"><span>${m.durasi}</span><span class="rating">${m.rating}</span><span>${m.tipe}</span></div><button class="btn btn-sm btn-outline-danger w-100 mt-3 fw-bold" onclick="playTrailer('${m.judul}', '${m.trailer}')"><i class="fa-solid fa-play me-1"></i> Lihat Trailer</button><div class="release-date"><i class="fa-solid fa-calendar-check me-2"></i> ${m.tanggal}</div></div></div></div>`;
             });
         }
         renderJadwal();
@@ -552,95 +611,51 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         let hargaSaatIni = 0; let kursiDipilih = []; let currentJudulFilm = ''; let currentNamaStudio = '';
         function bukaBooking(studio, judul, jam, harga, isVvip) {
             hargaSaatIni = harga; kursiDipilih = []; currentNamaStudio = studio; currentJudulFilm = judul;
-            document.getElementById('book-title').innerText = `${studio} - ${judul} (${jam})`;
-            document.getElementById('book-price').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(harga) + ' / Tiket';
-            updatePanelBooking(); 
-            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-            document.getElementById('view-booking').style.display = 'block';
+            document.getElementById('book-title').innerText = `${studio} - ${judul} (${jam})`; document.getElementById('book-price').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(harga) + ' / Tiket'; updatePanelBooking(); document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none'); document.getElementById('view-booking').style.display = 'block';
 
-            const seatMap = document.getElementById('seat-map'); seatMap.innerHTML = '';
-            const barisHuruf = isVvip ? ['A','B','C','D'] : ['A','B','C','D','E','F','G','H'];
-            const kolomPerSisi = isVvip ? 4 : 7; 
-            
+            const seatMap = document.getElementById('seat-map'); seatMap.innerHTML = ''; const barisHuruf = isVvip ? ['A','B','C','D'] : ['A','B','C','D','E','F','G','H']; const kolomPerSisi = isVvip ? 4 : 7; 
             barisHuruf.forEach(baris => {
                 let htmlBaris = `<div class="seat-row">`;
-                for(let i=1; i<=kolomPerSisi; i++) {
-                    let idKursi = baris + i; let sudahTerjual = Math.random() < 0.15; 
-                    let kelasKursi = isVvip ? 'seat vvip-seat' : 'seat'; if(sudahTerjual) kelasKursi += ' sold';
-                    htmlBaris += `<div class="${kelasKursi}" id="${idKursi}" onclick="pilihKursi(this, '${idKursi}')">${idKursi}</div>`;
-                }
+                for(let i=1; i<=kolomPerSisi; i++) { let idKursi = baris + i; let sudahTerjual = Math.random() < 0.15; let kelasKursi = isVvip ? 'seat vvip-seat' : 'seat'; if(sudahTerjual) kelasKursi += ' sold'; htmlBaris += `<div class="${kelasKursi}" id="${idKursi}" onclick="pilihKursi(this, '${idKursi}')">${idKursi}</div>`; }
                 htmlBaris += `<div class="seat-gap"></div>`;
-                for(let i=kolomPerSisi+1; i<=kolomPerSisi*2; i++) {
-                    let idKursi = baris + i; let sudahTerjual = Math.random() < 0.15;
-                    let kelasKursi = isVvip ? 'seat vvip-seat' : 'seat'; if(sudahTerjual) kelasKursi += ' sold';
-                    htmlBaris += `<div class="${kelasKursi}" id="${idKursi}" onclick="pilihKursi(this, '${idKursi}')">${idKursi}</div>`;
-                }
+                for(let i=kolomPerSisi+1; i<=kolomPerSisi*2; i++) { let idKursi = baris + i; let sudahTerjual = Math.random() < 0.15; let kelasKursi = isVvip ? 'seat vvip-seat' : 'seat'; if(sudahTerjual) kelasKursi += ' sold'; htmlBaris += `<div class="${kelasKursi}" id="${idKursi}" onclick="pilihKursi(this, '${idKursi}')">${idKursi}</div>`; }
                 htmlBaris += `</div>`; seatMap.innerHTML += htmlBaris;
             });
         }
 
         function pilihKursi(elemenKursi, idKursi) {
             if(elemenKursi.classList.contains('sold')) return;
-            if(elemenKursi.classList.contains('selected')) {
-                elemenKursi.classList.remove('selected'); kursiDipilih = kursiDipilih.filter(k => k !== idKursi);
-            } else {
-                elemenKursi.classList.add('selected'); kursiDipilih.push(idKursi);
-            }
+            if(elemenKursi.classList.contains('selected')) { elemenKursi.classList.remove('selected'); kursiDipilih = kursiDipilih.filter(k => k !== idKursi); } else { elemenKursi.classList.add('selected'); kursiDipilih.push(idKursi); }
             kursiDipilih.sort(); updatePanelBooking();
         }
 
         function updatePanelBooking() {
-            const jumlahTiket = kursiDipilih.length;
-            document.getElementById('lbl-count').innerText = jumlahTiket;
-            if(jumlahTiket > 0) {
-                document.getElementById('lbl-seats').innerText = "Kursi: " + kursiDipilih.join(', ');
-                document.getElementById('lbl-seats').className = 'text-gold fw-bold';
-            } else {
-                document.getElementById('lbl-seats').innerText = 'Belum ada kursi yang dipilih';
-                document.getElementById('lbl-seats').className = 'text-danger fw-bold';
-            }
+            const jumlahTiket = kursiDipilih.length; document.getElementById('lbl-count').innerText = jumlahTiket;
+            if(jumlahTiket > 0) { document.getElementById('lbl-seats').innerText = "Kursi: " + kursiDipilih.join(', '); document.getElementById('lbl-seats').className = 'text-gold fw-bold'; } else { document.getElementById('lbl-seats').innerText = 'Belum ada kursi yang dipilih'; document.getElementById('lbl-seats').className = 'text-danger fw-bold'; }
             document.getElementById('lbl-total').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(jumlahTiket * hargaSaatIni);
         }
 
         function prosesTiket() {
             if(kursiDipilih.length === 0) { alert("Pilih minimal 1 kursi terlebih dahulu!"); return; }
-            const btnProses = document.querySelector('.booking-panel .btn-danger');
-            btnProses.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...'; btnProses.disabled = true;
-
+            const btnProses = document.querySelector('.booking-panel .btn-danger'); btnProses.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...'; btnProses.disabled = true;
             const payload = { judul: currentJudulFilm, studio: currentNamaStudio, qty: kursiDipilih.length, total: kursiDipilih.length * hargaSaatIni };
-            fetch('index.php?action=buy_ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            .then(res => res.json())
-            .then(data => {
+            fetch('index.php?action=buy_ticket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(res => res.json()).then(data => {
                 btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-ticket ms-2"></i>'; btnProses.disabled = false;
                 if(data.success) {
                     alert(`TRANSAKSI BERHASIL!\nTiket dicetak untuk kursi: ${kursiDipilih.join(', ')}.\nTotal Pembayaran: Rp ${new Intl.NumberFormat('id-ID').format(payload.total)}`);
-                    let defaultView = '<?php echo $role == 'admin' ? 'view-dashboard' : 'view-jadwal'; ?>';
-                    let menuIndex = '<?php echo $role == 'admin' ? '.menu-item:nth-child(1)' : '.menu-item:nth-child(1)'; ?>';
-                    switchView(defaultView, document.querySelector(menuIndex)); 
+                    let defaultView = '<?php echo $role == 'admin' ? 'view-dashboard' : 'view-jadwal'; ?>'; let menuIndex = '<?php echo $role == 'admin' ? '.menu-item:nth-child(1)' : '.menu-item:nth-child(1)'; ?>'; switchView(defaultView, document.querySelector(menuIndex)); 
                 } else { alert("Gagal memproses tiket! Penyebab: " + data.error); }
             }).catch(err => { btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-ticket ms-2"></i>'; btnProses.disabled = false; alert("Terjadi kesalahan jaringan."); });
         }
 
         // ==========================================
-        // JS KHUSUS ADMIN (TIDAK BERJALAN JIKA CUSTOMER)
+        // JS KHUSUS ADMIN
         // ==========================================
         <?php if($role == 'admin'): ?>
         let membersData = [ { id: '#MBR-9012', nama: 'Ahmad Fathur', tingkat: 'Gold', badgeColor: 'bg-warning text-dark', poin: '1,200 Pts', status: 'Aktif', statusColor: 'text-success' }, { id: '#MBR-9013', nama: 'Siti Nurbaya', tingkat: 'Silver', badgeColor: 'bg-secondary text-white', poin: '450 Pts', status: 'Aktif', statusColor: 'text-success' } ];
-        function renderMembers() {
-            const tbody = document.getElementById('member-table-body'); tbody.innerHTML = '';
-            if(membersData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white fw-bold">Data Member Kosong</td></tr>'; return; }
-            membersData.forEach((m, index) => { tbody.innerHTML += `<tr><td class="text-white fw-bold">${m.id}</td><td class="text-white fw-bold">${m.nama}</td><td><span class="badge ${m.badgeColor} fw-bold" style="border-radius:4px; padding: 5px 10px;">${m.tingkat}</span></td><td class="text-white fw-bold">${m.poin}</td><td class="${m.statusColor} fw-bold">${m.status}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteMember(${index})"><i class="fa-solid fa-trash"></i> Hapus</button></td></tr>`; });
-        }
+        function renderMembers() { const tbody = document.getElementById('member-table-body'); tbody.innerHTML = ''; if(membersData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white fw-bold">Data Member Kosong</td></tr>'; return; } membersData.forEach((m, index) => { tbody.innerHTML += `<tr><td class="text-white fw-bold">${m.id}</td><td class="text-white fw-bold">${m.nama}</td><td><span class="badge ${m.badgeColor} fw-bold" style="border-radius:4px; padding: 5px 10px;">${m.tingkat}</span></td><td class="text-white fw-bold">${m.poin}</td><td class="${m.statusColor} fw-bold">${m.status}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteMember(${index})"><i class="fa-solid fa-trash"></i> Hapus</button></td></tr>`; }); }
         function deleteMember(index) { if (confirm(`Hapus member ${membersData[index].nama}?`)) { membersData.splice(index, 1); renderMembers(); } }
-        function simpanMemberBaru() {
-            const nama = document.getElementById('inputNamaMember').value; const tingkat = document.getElementById('inputTingkatMember').value;
-            if(nama.trim() === '') { alert("Nama member wajib diisi!"); return; }
-            const randomId = '#MBR-' + Math.floor(Math.random() * 9000 + 1000);
-            let badgeStyle = '', poinAwal = '';
-            if(tingkat === 'Bronze') { badgeStyle = 'bg-dark border border-secondary text-white'; poinAwal = '50 Pts'; } if(tingkat === 'Silver') { badgeStyle = 'bg-secondary text-white'; poinAwal = '150 Pts'; } if(tingkat === 'Gold') { badgeStyle = 'bg-warning text-dark'; poinAwal = '500 Pts'; }
-            membersData.unshift({ id: randomId, nama: nama, tingkat: tingkat, badgeColor: badgeStyle, poin: poinAwal, status: 'Aktif', statusColor: 'text-success' });
-            renderMembers(); var modalInstance = bootstrap.Modal.getInstance(document.getElementById('tambahMemberModal')); modalInstance.hide(); document.getElementById('inputNamaMember').value = '';
-        }
+        function simpanMemberBaru() { const nama = document.getElementById('inputNamaMember').value; const tingkat = document.getElementById('inputTingkatMember').value; if(nama.trim() === '') { alert("Nama member wajib diisi!"); return; } const randomId = '#MBR-' + Math.floor(Math.random() * 9000 + 1000); let badgeStyle = '', poinAwal = ''; if(tingkat === 'Bronze') { badgeStyle = 'bg-dark border border-secondary text-white'; poinAwal = '50 Pts'; } if(tingkat === 'Silver') { badgeStyle = 'bg-secondary text-white'; poinAwal = '150 Pts'; } if(tingkat === 'Gold') { badgeStyle = 'bg-warning text-dark'; poinAwal = '500 Pts'; } membersData.unshift({ id: randomId, nama: nama, tingkat: tingkat, badgeColor: badgeStyle, poin: poinAwal, status: 'Aktif', statusColor: 'text-success' }); renderMembers(); var modalInstance = bootstrap.Modal.getInstance(document.getElementById('tambahMemberModal')); modalInstance.hide(); document.getElementById('inputNamaMember').value = ''; }
         renderMembers();
 
         let fnbKeranjang = []; let fnbTotalHarga = 0;
@@ -652,30 +667,21 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             fetch(`index.php?action=get_data&time=${activeTimeframe}&limit=all`).then(r => r.json()).then(d => {
                 if(!d.success) { alert("Gagal mengambil data laporan dari server."); btn.innerHTML = originalText; btn.disabled = false; return; }
                 const { jsPDF } = window.jspdf; const doc = new jsPDF();
-                doc.setFontSize(18); doc.setTextColor(229, 9, 20); doc.setFont(undefined, 'bold'); doc.text("LAPORAN KEUANGAN CINEPLEX HQ", 14, 22);
-                doc.setFontSize(11); doc.setTextColor(100, 100, 100); doc.setFont(undefined, 'normal'); let lbl = document.getElementById('lbl-time1').innerText || '(Hari Ini)'; doc.text("Periode Laporan: " + lbl, 14, 30); doc.text("Tanggal Dicetak: " + new Date().toLocaleString('id-ID'), 14, 36); doc.text("Total Transaksi: " + d.kpi.rows + " TRX", 14, 42);
-                let tableData = []; d.table.forEach((r, index) => { let jam = new Date(r.waktu_transaksi).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); let tgl = new Date(r.waktu_transaksi).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}); tableData.push([ index + 1, `${tgl} ${jam}`, r.judul_film, r.nama_tipe, r.jumlah_tiket + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(r.total_pendapatan) ]); });
-                tableData.push([ "", "", "", "TOTAL KESELURUHAN", d.kpi.visitor + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(d.kpi.rev) ]);
-                doc.autoTable({ startY: 50, head: [['No', 'Waktu Transaksi', 'Judul Film', 'Studio', 'Tiket', 'Pendapatan']], body: tableData, theme: 'grid', headStyles: { fillColor: [229, 9, 20], textColor: [255, 255, 255], fontStyle: 'bold' }, footStyles: { fillColor: [34, 34, 34] }, didParseCell: function (data) { var rows = data.table.body; if (data.row.index === rows.length - 1) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [20, 20, 20]; data.cell.styles.textColor = (data.column.index >= 3) ? [212, 175, 55] : [255, 255, 255]; } } });
-                doc.save(`Laporan_Keuangan_Cineplex_${activeTimeframe}.pdf`); btn.innerHTML = originalText; btn.disabled = false;
-            }).catch(err => { alert("Terjadi kesalahan sistem saat mengekspor PDF."); btn.innerHTML = originalText; btn.disabled = false; });
+                doc.setFontSize(18); doc.setTextColor(229, 9, 20); doc.setFont(undefined, 'bold'); doc.text("LAPORAN KEUANGAN CINEPLEX HQ", 14, 22); doc.setFontSize(11); doc.setTextColor(100, 100, 100); doc.setFont(undefined, 'normal'); let lbl = document.getElementById('lbl-time1').innerText || '(Hari Ini)'; doc.text("Periode Laporan: " + lbl, 14, 30); doc.text("Tanggal Dicetak: " + new Date().toLocaleString('id-ID'), 14, 36); doc.text("Total Transaksi: " + d.kpi.rows + " TRX", 14, 42); let tableData = []; d.table.forEach((r, index) => { let jam = new Date(r.waktu_transaksi).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); let tgl = new Date(r.waktu_transaksi).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}); tableData.push([ index + 1, `${tgl} ${jam}`, r.judul_film, r.nama_tipe, r.jumlah_tiket + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(r.total_pendapatan) ]); }); tableData.push([ "", "", "", "TOTAL KESELURUHAN", d.kpi.visitor + " Tkt", "Rp " + new Intl.NumberFormat('id-ID').format(d.kpi.rev) ]);
+                doc.autoTable({ startY: 50, head: [['No', 'Waktu Transaksi', 'Judul Film', 'Studio', 'Tiket', 'Pendapatan']], body: tableData, theme: 'grid', headStyles: { fillColor: [229, 9, 20], textColor: [255, 255, 255], fontStyle: 'bold' }, footStyles: { fillColor: [34, 34, 34] }, didParseCell: function (data) { var rows = data.table.body; if (data.row.index === rows.length - 1) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [20, 20, 20]; data.cell.styles.textColor = (data.column.index >= 3) ? [212, 175, 55] : [255, 255, 255]; } } }); doc.save(`Laporan_Keuangan_Cineplex_${activeTimeframe}.pdf`); btn.innerHTML = originalText; btn.disabled = false;
+            }).catch(err => { alert("Terjadi kesalahan."); btn.innerHTML = originalText; btn.disabled = false; });
         }
 
         let cStudio = null; let cFilm = null; let activeTimeframe = 'today';
         function setFilter(time, btn) { activeTimeframe = time; document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); let lbl = ''; if(time === 'today') lbl = '(Hari Ini)'; else if(time === 'weekly') lbl = '(7 Hari)'; else if(time === 'monthly') lbl = '(1 Bulan)'; else if(time === 'yearly') lbl = '(1 Tahun)'; else if(time === '5years') lbl = '(5 Tahun)'; document.getElementById('lbl-time1').innerText = lbl; fetchData(); }
         function fetchData() {
             fetch(`index.php?action=get_data&time=${activeTimeframe}`).then(r => r.json()).then(d => {
-                if(!d.success) return;
-                document.getElementById('kpi-rev').innerText = new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(d.kpi.rev); document.getElementById('kpi-vis').innerText = d.kpi.visitor + " Orang"; document.getElementById('kpi-trx').innerText = d.kpi.rows + " TRX";
-                const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
+                if(!d.success) return; document.getElementById('kpi-rev').innerText = new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(d.kpi.rev); document.getElementById('kpi-vis').innerText = d.kpi.visitor + " Orang"; document.getElementById('kpi-trx').innerText = d.kpi.rows + " TRX"; const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
                 d.table.forEach(r => { let jam = new Date(r.waktu_transaksi).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); let tgl = new Date(r.waktu_transaksi).toLocaleDateString('id-ID', {day:'2-digit', month:'short'}); tbody.innerHTML += `<tr><td class="text-white fw-bold">${tgl} ${jam}</td><td class="text-white fw-bold">${r.judul_film}</td><td><span class="badge-studio fw-bold text-white">${r.nama_tipe}</span></td><td class="text-white fw-bold"><i class="fa-solid fa-location-dot text-danger"></i> ${r.kota_cabang}</td><td class="text-white fw-bold">${r.jumlah_tiket} Tkt</td><td class="text-gold fw-bold">Rp ${new Intl.NumberFormat('id-ID').format(r.total_pendapatan)}</td></tr>`; });
-                let stLab = d.chart_studio.map(x=>x.nama_tipe); let stVal = d.chart_studio.map(x=>x.total);
-                if(cStudio) { cStudio.data.labels=stLab; cStudio.data.datasets[0].data=stVal; cStudio.update(); } else { cStudio = new Chart(document.getElementById('studioChart'), { type: 'bar', data: { labels: stLab, datasets: [{ label: 'Pendapatan', data: stVal, backgroundColor: '#e50914', borderRadius: 4 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#222'}}, x:{grid:{display:false}} } } }); }
-                let flLab = d.chart_film.map(x=>x.judul_film); let flVal = d.chart_film.map(x=>x.v);
-                if(cFilm) { cFilm.data.labels=flLab; cFilm.data.datasets[0].data=flVal; cFilm.update(); } else { cFilm = new Chart(document.getElementById('filmChart'), { type: 'doughnut', data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} } }); }
+                let stLab = d.chart_studio.map(x=>x.nama_tipe); let stVal = d.chart_studio.map(x=>x.total); if(cStudio) { cStudio.data.labels=stLab; cStudio.data.datasets[0].data=stVal; cStudio.update(); } else { cStudio = new Chart(document.getElementById('studioChart'), { type: 'bar', data: { labels: stLab, datasets: [{ label: 'Pendapatan', data: stVal, backgroundColor: '#e50914', borderRadius: 4 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#222'}}, x:{grid:{display:false}} } } }); }
+                let flLab = d.chart_film.map(x=>x.judul_film); let flVal = d.chart_film.map(x=>x.v); if(cFilm) { cFilm.data.labels=flLab; cFilm.data.datasets[0].data=flVal; cFilm.update(); } else { cFilm = new Chart(document.getElementById('filmChart'), { type: 'doughnut', data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} } }); }
             });
         }
-        
         fetchData(); setInterval(fetchData, 2000); 
         <?php endif; ?>
     </script>
