@@ -127,9 +127,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         :root { --bg-dark: #0a0a0a; --bg-card: #151515; --c-red: #e50914; --c-gold: #d4af37; --text-main: #ffffff; --text-mut: #888; }
         body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; overflow: hidden; margin: 0; }
         
-        /* LAYOUT (Diubah agar tidak tertutup pemutar Spotify di bawah) */
-        .sidebar { width: 260px; background-color: #000; height: calc(100vh - 90px); padding: 20px 0; border-right: 1px solid #222; overflow-y: auto; }
-        .main-content { flex: 1; padding: 30px; height: calc(100vh - 90px); overflow-y: auto; }
+        /* LAYOUT */
+        .sidebar { width: 260px; background-color: #000; height: 100vh; padding: 20px 0; border-right: 1px solid #222; overflow-y: auto; }
+        .main-content { flex: 1; padding: 30px; height: 100vh; overflow-y: auto; position: relative; }
 
         .brand-logo { color: var(--c-red); font-size: 24px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: 1px;}
         .menu-item { padding: 15px 25px; color: var(--text-mut); text-decoration: none; display: block; font-weight: 600; transition: 0.3s; cursor: pointer; border-left: 4px solid transparent; }
@@ -191,29 +191,39 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ========================================================
-           SPOTIFY MUSIC PLAYER STYLE (Di Bagian Bawah Layar)
+           SPOTIFY MUSIC PLAYER STYLE (COMPACT WIDGET POJOK KANAN ATAS)
            ======================================================== */
         .spotify-player {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 90px;
-            background-color: #181818; border-top: 1px solid #282828;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 9999; box-sizing: border-box; color: #fff;
+            position: fixed; 
+            top: 110px;  /* Tepat di bawah Jam/Tanggal */
+            right: 35px; 
+            width: 320px; /* Lebar lebih kecil dan compact */
+            background-color: rgba(24, 24, 24, 0.95); 
+            backdrop-filter: blur(10px);
+            border-radius: 12px; 
+            border: 1px solid #333;
+            display: flex; 
+            flex-direction: column; 
+            padding: 15px; 
+            z-index: 9999; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            color: #fff;
         }
-        .track-info { display: flex; align-items: center; width: 30%; }
-        .track-cover { width: 56px; height: 56px; border-radius: 4px; margin-right: 15px; object-fit: cover; }
-        .track-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 2px; }
-        .track-artist { font-size: 12px; color: #b3b3b3; }
-        .player-controls { display: flex; flex-direction: column; align-items: center; width: 40%; }
-        .control-buttons { display: flex; align-items: center; gap: 20px; margin-bottom: 8px; color: #b3b3b3; font-size: 16px; }
+        .track-cover { width: 50px; height: 50px; border-radius: 6px; margin-right: 12px; object-fit: cover; }
+        .track-title { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-artist { font-size: 11px; color: #b3b3b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .control-buttons { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; color: #b3b3b3; font-size: 15px; }
+        .control-buttons i { cursor: pointer; transition: 0.2s; }
+        .control-buttons i:hover { color: #fff; }
         .play-pause-btn { 
-            width: 32px; height: 32px; background-color: #fff; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; color: #000; 
-            cursor: default; /* Sesuai request: tidak bisa dipause manual */
+            width: 30px; height: 30px; background-color: #fff; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; color: #000; cursor: default;
         }
-        .playback-bar { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 11px; color: #a7a7a7; font-weight: bold; }
+        .play-pause-btn i { cursor: default; }
+        .play-pause-btn i:hover { color: #000; }
+        .playback-bar { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 10px; color: #a7a7a7; font-weight: bold; }
         .progress-bar-container { flex-grow: 1; height: 4px; background-color: #535353; border-radius: 2px; position: relative; overflow: hidden; }
-        .progress-bar { height: 100%; background-color: #fff; width: 0%; border-radius: 2px; transition: width 0.5s linear;}
-        .progress-bar-container:hover .progress-bar { background-color: #1ed760; }
+        .progress-bar { height: 100%; background-color: #1ed760; width: 0%; border-radius: 2px; transition: width 0.5s linear;}
     </style>
 </head>
 <body>
@@ -407,44 +417,33 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
-    <!-- TAMPILAN SPOTIFY PLAYER DI BAWAH (SELALU MUNCUL) -->
+    <!-- WIDGET SPOTIFY PLAYER (COMPACT DI KANAN ATAS) -->
     <div class="spotify-player">
-        <div class="track-info">
-            <!-- Cover dari lagu Ian Asher Way Too Self Aware -->
-            <img src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
-            <div>
-                <div class="track-title">Way Too Self Aware (Official Audio)</div>
-                <div class="track-artist">Ian Asher</div>
+        <div class="d-flex align-items-center mb-3">
+            <img id="sp-cover" src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
+            <div style="flex-grow: 1; overflow: hidden;">
+                <div id="sp-title" class="track-title">Way Too Self Aware</div>
+                <div id="sp-artist" class="track-artist">Ian Asher</div>
             </div>
-            <i class="fa-solid fa-heart ms-4" style="color: #1ed760; font-size: 18px;"></i>
+            <i class="fa-solid fa-heart ms-2" style="color: #1ed760; font-size: 16px;"></i>
         </div>
         
-        <div class="player-controls">
+        <div class="d-flex flex-column align-items-center w-100">
             <div class="control-buttons">
                 <i class="fa-solid fa-shuffle" style="color: #1ed760;"></i>
-                <i class="fa-solid fa-backward-step"></i>
-                <!-- Tombol pause hiasan, klik tidak akan berpengaruh -->
+                <i class="fa-solid fa-backward-step" onclick="prevTrack()"></i>
                 <div class="play-pause-btn">
-                    <i id="play-icon" class="fa-solid fa-play text-dark"></i>
+                    <i id="play-icon" class="fa-solid fa-play"></i>
                 </div>
-                <i class="fa-solid fa-forward-step"></i>
+                <i class="fa-solid fa-forward-step" onclick="nextTrack()"></i>
                 <i class="fa-solid fa-repeat" style="color: #1ed760;"></i>
             </div>
             <div class="playback-bar">
-                <span id="music-current-time" class="time-current">0:00</span>
+                <span id="music-current-time">0:00</span>
                 <div class="progress-bar-container">
                     <div id="music-progress" class="progress-bar"></div>
                 </div>
-                <span id="music-total-time" class="time-total">2:37</span>
-            </div>
-        </div>
-        
-        <div class="volume-controls text-end pe-4" style="width: 30%; color: #b3b3b3;">
-            <i class="fa-solid fa-list me-3"></i>
-            <i class="fa-solid fa-computer me-3"></i>
-            <i class="fa-solid fa-volume-high me-2"></i>
-            <div style="display:inline-block; width: 80px; height: 4px; background:#535353; border-radius:2px; vertical-align:middle;">
-                <div style="width: 100%; height: 100%; background:#1ed760; border-radius:2px;"></div>
+                <span id="music-total-time">0:00</span>
             </div>
         </div>
     </div>
@@ -467,7 +466,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     </div>
 
     <script>
-        // SCRIPT UNTUK MUSIC PLAYER DARI YOUTUBE (IAN ASHER)
+        // SCRIPT YOUTUBE IFRAME API UNTUK PLAYLIST MUSIK SPOTIFY
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -476,11 +475,22 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         var bgMusicPlayer;
         var isMusicPlaying = false;
         var wasPlayingBeforeTrailer = false;
+        var currentTrackIndex = 0;
+
+        // DAFTAR LAGU PLAYLIST SESUAI PERMINTAAN
+        const musicPlaylist = [
+            { title: "Way Too Self Aware (Official Audio)", artist: "Ian Asher", id: "gpi25y0hLr8" },
+            { title: "Take Me (To The Moon)", artist: "Ian Asher", id: "tNHXDNaNqsU" },
+            { title: "Black Out Days", artist: "Ian Asher & Phantogram", id: "ypTyxrFLi8Q" },
+            { title: "Headlights (feat. KIDDO)", artist: "Alok & Alan Walker", id: "kyLuzKbgXAs" },
+            { title: "The Spectre", artist: "Alan Walker", id: "wJnBTPUQS5A" },
+            { title: "Who I Am", artist: "Alan Walker, Putri Ariani, Peder Elias", id: "ccu6JuC21rk" }
+        ];
 
         function onYouTubeIframeAPIReady() {
             bgMusicPlayer = new YT.Player('bg-music-player', {
-                videoId: 'gpi25y0hLr8', // ID Youtube Ian Asher
-                playerVars: { 'autoplay': 0, 'loop': 1, 'playlist': 'gpi25y0hLr8', 'controls': 0 },
+                videoId: musicPlaylist[0].id,
+                playerVars: { 'autoplay': 0, 'controls': 0, 'showinfo': 0 },
                 events: {
                     'onStateChange': function(event) {
                         if(event.data == YT.PlayerState.PLAYING) {
@@ -489,22 +499,23 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                         } else if(event.data == YT.PlayerState.PAUSED) {
                             isMusicPlaying = false;
                             document.getElementById('play-icon').classList.replace('fa-pause', 'fa-play');
+                        } else if(event.data == YT.PlayerState.ENDED) {
+                            nextTrack(); // Otomatis lanjut ke lagu berikutnya
                         }
                     }
                 }
             });
         }
 
-        // Trik browser: Musik otomatis menyala saat user klik apa saja di layar
+        // Trik browser: Musik otomatis menyala saat user klik apa saja di layar pertama kali
         window.addEventListener('click', function initAudio() {
             if(!isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') {
                 bgMusicPlayer.playVideo();
-                // Hapus event listener agar tidak bentrok
                 window.removeEventListener('click', initAudio);
             }
         });
 
-        // Update garis detik Spotify Player
+        // Update progress bar dan detik Spotify Widget
         setInterval(() => {
             if(isMusicPlaying && bgMusicPlayer && bgMusicPlayer.getCurrentTime) {
                 let current = bgMusicPlayer.getCurrentTime();
@@ -521,6 +532,30 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 }
             }
         }, 1000);
+
+        // FUNGSI GANTI LAGU (NEXT & PREV)
+        function loadTrack(index) {
+            let track = musicPlaylist[index];
+            document.getElementById('sp-title').innerText = track.title;
+            document.getElementById('sp-artist').innerText = track.artist;
+            document.getElementById('sp-cover').src = 'https://i.ytimg.com/vi/' + track.id + '/mqdefault.jpg';
+            
+            if(bgMusicPlayer && typeof bgMusicPlayer.loadVideoById === 'function') {
+                bgMusicPlayer.loadVideoById(track.id);
+            }
+        }
+
+        function nextTrack() {
+            currentTrackIndex++;
+            if(currentTrackIndex >= musicPlaylist.length) currentTrackIndex = 0;
+            loadTrack(currentTrackIndex);
+        }
+
+        function prevTrack() {
+            currentTrackIndex--;
+            if(currentTrackIndex < 0) currentTrackIndex = musicPlaylist.length - 1;
+            loadTrack(currentTrackIndex);
+        }
 
         // GLOBAL JS MENU
         function switchView(viewId, element) {
