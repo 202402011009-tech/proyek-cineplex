@@ -136,8 +136,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .menu-item:hover, .menu-item.active { background: rgba(229,9,20,0.1); color: var(--c-red); border-left: 4px solid var(--c-red); }
         .menu-item i { width: 30px; }
 
+        /* HEADER DIUBAH AGAR BISA MENAMPUNG PEMUTAR MUSIK DI TENGAH/KANAN */
         .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
-        .time-display { font-size: 24px; font-weight: 800; color: var(--c-gold); letter-spacing: 2px;}
+        .time-display { font-size: 24px; font-weight: 800; color: var(--c-gold); letter-spacing: 2px; line-height: 1;}
         .date-display { font-size: 14px; color: var(--text-mut); text-transform: uppercase; font-weight: bold; }
 
         .filter-group { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
@@ -191,36 +192,31 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ========================================================
-           SPOTIFY MUSIC PLAYER STYLE (COMPACT WIDGET POJOK KANAN ATAS)
+           SPOTIFY MUSIC PLAYER STYLE (INLINE DI HEADER)
            ======================================================== */
         .spotify-player {
-            position: fixed; 
-            top: 110px;  /* Tepat di bawah Jam/Tanggal */
-            right: 35px; 
-            width: 320px; /* Lebar lebih kecil dan compact */
+            width: 330px;
             background-color: rgba(24, 24, 24, 0.95); 
-            backdrop-filter: blur(10px);
-            border-radius: 12px; 
+            border-radius: 10px; 
             border: 1px solid #333;
             display: flex; 
             flex-direction: column; 
-            padding: 15px; 
-            z-index: 9999; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            padding: 10px 15px; 
             color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin: 0 20px; /* Jarak agar tidak menabrak teks di kiri-kanannya */
         }
-        .track-cover { width: 50px; height: 50px; border-radius: 6px; margin-right: 12px; object-fit: cover; }
-        .track-title { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-cover { width: 40px; height: 40px; border-radius: 6px; margin-right: 12px; object-fit: cover; }
+        .track-title { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 0px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .track-artist { font-size: 11px; color: #b3b3b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .control-buttons { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; color: #b3b3b3; font-size: 15px; }
+        .control-buttons { display: flex; align-items: center; justify-content: center; gap: 20px; color: #b3b3b3; font-size: 14px; margin-bottom: 5px; }
         .control-buttons i { cursor: pointer; transition: 0.2s; }
         .control-buttons i:hover { color: #fff; }
         .play-pause-btn { 
-            width: 30px; height: 30px; background-color: #fff; border-radius: 50%; 
+            width: 25px; height: 25px; background-color: #fff; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; color: #000; cursor: default;
         }
-        .play-pause-btn i { cursor: default; }
-        .play-pause-btn i:hover { color: #000; }
+        .play-pause-btn i { cursor: default; font-size: 10px; }
         .playback-bar { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 10px; color: #a7a7a7; font-weight: bold; }
         .progress-bar-container { flex-grow: 1; height: 4px; background-color: #535353; border-radius: 2px; position: relative; overflow: hidden; }
         .progress-bar { height: 100%; background-color: #1ed760; width: 0%; border-radius: 2px; transition: width 0.5s linear;}
@@ -257,12 +253,45 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     <!-- SISI KANAN: KONTEN UTAMA -->
     <div class="main-content">
+        <!-- HEADER ATAS (MENYATU DENGAN SPOTIFY PLAYER) -->
         <div class="top-header">
-            <div>
+            <div style="flex: 1;">
                 <h3 class="mb-0 fw-bold text-white" id="page-title"><?php echo $role == 'admin' ? 'Live Dashboard' : 'Jadwal Tayang Film'; ?></h3>
                 <span class="text-danger small fw-bold"><i class="fa-solid fa-circle text-danger me-1" style="animation: pulse 1s infinite;"></i> CINEPLEX SYSTEM</span>
             </div>
-            <div class="text-end">
+
+            <!-- WIDGET SPOTIFY PLAYER (DITANAM DI TENGAH HEADER) -->
+            <div class="spotify-player">
+                <div class="d-flex align-items-center mb-2">
+                    <img id="sp-cover" src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div id="sp-title" class="track-title">Way Too Self Aware</div>
+                        <div id="sp-artist" class="track-artist">Ian Asher</div>
+                    </div>
+                    <i class="fa-solid fa-heart ms-2" style="color: #1ed760; font-size: 14px;"></i>
+                </div>
+                
+                <div class="d-flex flex-column align-items-center w-100">
+                    <div class="control-buttons">
+                        <i class="fa-solid fa-shuffle" style="color: #1ed760;"></i>
+                        <i class="fa-solid fa-backward-step" onclick="prevTrack()" title="Lagu Sebelumnya"></i>
+                        <div class="play-pause-btn">
+                            <i id="play-icon" class="fa-solid fa-play"></i>
+                        </div>
+                        <i class="fa-solid fa-forward-step" onclick="nextTrack()" title="Lagu Selanjutnya"></i>
+                        <i class="fa-solid fa-repeat" style="color: #1ed760;"></i>
+                    </div>
+                    <div class="playback-bar">
+                        <span id="music-current-time">0:00</span>
+                        <div class="progress-bar-container">
+                            <div id="music-progress" class="progress-bar"></div>
+                        </div>
+                        <span id="music-total-time">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end" style="flex: 1;">
                 <div class="time-display" id="live-time">00:00:00</div>
                 <div class="date-display" id="live-date">Memuat Tanggal...</div>
             </div>
@@ -417,37 +446,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
-    <!-- WIDGET SPOTIFY PLAYER (COMPACT DI KANAN ATAS) -->
-    <div class="spotify-player">
-        <div class="d-flex align-items-center mb-3">
-            <img id="sp-cover" src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
-            <div style="flex-grow: 1; overflow: hidden;">
-                <div id="sp-title" class="track-title">Way Too Self Aware</div>
-                <div id="sp-artist" class="track-artist">Ian Asher</div>
-            </div>
-            <i class="fa-solid fa-heart ms-2" style="color: #1ed760; font-size: 16px;"></i>
-        </div>
-        
-        <div class="d-flex flex-column align-items-center w-100">
-            <div class="control-buttons">
-                <i class="fa-solid fa-shuffle" style="color: #1ed760;"></i>
-                <i class="fa-solid fa-backward-step" onclick="prevTrack()"></i>
-                <div class="play-pause-btn">
-                    <i id="play-icon" class="fa-solid fa-play"></i>
-                </div>
-                <i class="fa-solid fa-forward-step" onclick="nextTrack()"></i>
-                <i class="fa-solid fa-repeat" style="color: #1ed760;"></i>
-            </div>
-            <div class="playback-bar">
-                <span id="music-current-time">0:00</span>
-                <div class="progress-bar-container">
-                    <div id="music-progress" class="progress-bar"></div>
-                </div>
-                <span id="music-total-time">0:00</span>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL TRAILER YOUTUBE -->
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -477,12 +475,10 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         var wasPlayingBeforeTrailer = false;
         var currentTrackIndex = 0;
 
-        // DAFTAR LAGU PLAYLIST SESUAI PERMINTAAN
+        // DAFTAR LAGU PLAYLIST SESUAI PERMINTAAN TERBARU
         const musicPlaylist = [
-            { title: "Way Too Self Aware (Official Audio)", artist: "Ian Asher", id: "gpi25y0hLr8" },
+            { title: "Way Too Self Aware", artist: "Ian Asher", id: "gpi25y0hLr8" },
             { title: "Take Me (To The Moon)", artist: "Ian Asher", id: "tNHXDNaNqsU" },
-            { title: "Black Out Days", artist: "Ian Asher & Phantogram", id: "ypTyxrFLi8Q" },
-            { title: "Headlights (feat. KIDDO)", artist: "Alok & Alan Walker", id: "kyLuzKbgXAs" },
             { title: "The Spectre", artist: "Alan Walker", id: "wJnBTPUQS5A" },
             { title: "Who I Am", artist: "Alan Walker, Putri Ariani, Peder Elias", id: "ccu6JuC21rk" }
         ];
@@ -507,7 +503,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             });
         }
 
-        // Trik browser: Musik otomatis menyala saat user klik apa saja di layar pertama kali
+        // Musik otomatis menyala saat user klik apa saja di layar pertama kali
         window.addEventListener('click', function initAudio() {
             if(!isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') {
                 bgMusicPlayer.playVideo();
