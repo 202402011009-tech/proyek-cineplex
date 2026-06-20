@@ -62,7 +62,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'buy_ticket') {
 // API KHUSUS ADMIN (DASHBOARD & LAPORAN)
 if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
     header('Content-Type: application/json');
-    // KEAMANAN MULTI-USER: Jika bukan admin, tolak akses data laporannya
     if($role !== 'admin') { echo json_encode(["success"=>false, "error"=>"Unauthorized"]); exit; }
 
     $out = ["success"=>true, "kpi"=>["rev"=>0, "visitor"=>0, "rows"=>0], "table"=>[], "chart_studio"=>[], "chart_film"=>[]];
@@ -79,7 +78,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                               VALUES ($r_film, $r_cabang, $r_tipe, $r_qty, $total, NOW())");
             }
         }
-        // ----------------------------------------------------
 
         $timeframe = isset($_GET['time']) ? $_GET['time'] : 'today';
         $time_cond = "DATE(p.waktu_transaksi) = CURDATE()"; 
@@ -192,15 +190,42 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
         .view-section { display: none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TAMPILAN TOMBOL MUSIK MELAYANG */
+        .music-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #e50914;
+            color: white;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(229,9,20,0.6);
+            cursor: pointer;
+            z-index: 9999;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .music-btn:hover { background: #b0060f; transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-    <!-- SISI KIRI: MENU SIDEBAR BERDASARKAN ROLE -->
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3" type="audio/mpeg">
+    </audio>
+    <button class="music-btn" id="musicToggleBtn" onclick="toggleMusic()" title="Nyala/Matikan Musik Latar">
+        <i class="fa-solid fa-volume-xmark" id="musicIcon"></i>
+    </button>
+
     <div class="sidebar">
         <div class="brand-logo"><i class="fa-solid fa-film"></i> CINEPLEX</div>
         
-        <!-- Identitas User -->
         <div class="text-center mb-4 border-bottom border-secondary pb-3 mx-3">
             <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($nama_user); ?>&background=random" class="rounded-circle mb-2" width="50">
             <div class="text-white fw-bold"><?php echo htmlspecialchars($nama_user); ?></div>
@@ -215,14 +240,12 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             <a class="menu-item" onclick="switchView('view-member', this)"><i class="fa-solid fa-users"></i> Data Member</a>
             <a class="menu-item" onclick="switchView('view-fnb', this)"><i class="fa-solid fa-burger"></i> Snack & Minuman</a>
         <?php else: ?>
-            <!-- JIKA BUKAN ADMIN (PENGUNJUNG), HANYA BISA LIHAT MENU INI -->
             <a class="menu-item active" onclick="switchView('view-jadwal', this)"><i class="fa-solid fa-calendar-days"></i> Jadwal Tayang Film</a>
         <?php endif; ?>
         
         <a href="?logout=true" class="menu-item text-danger mt-5"><i class="fa-solid fa-power-off"></i> Logout</a>
     </div>
 
-    <!-- SISI KANAN: KONTEN UTAMA -->
     <div class="main-content">
         <div class="top-header">
             <div>
@@ -236,7 +259,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
 
         <?php if($role == 'admin'): ?>
-        <!-- ======================= BAGIAN KHUSUS ADMIN ======================= -->
         <div id="view-dashboard" class="view-section" style="display: block;">
             <div class="filter-group">
                 <button class="btn-filter active" onclick="setFilter('today', this)">Pendapatan Hari Ini</button>
@@ -329,9 +351,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
         <?php endif; ?>
 
-        <!-- ======================= BAGIAN UMUM (BISA DILIHAT ADMIN & PELANGGAN) ======================= -->
-        
-        <!-- Default tampilan untuk Pelanggan adalah jadwal, jika admin maka sembunyikan awalnya -->
         <div id="view-jadwal" class="view-section" style="display: <?php echo $role == 'customer' ? 'block' : 'none'; ?>;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="text-white fw-bold m-0">Sedang Tayang di Cineplex</h4>
@@ -385,7 +404,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
-    <!-- MODAL TRAILER YOUTUBE -->
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary">
@@ -420,14 +438,61 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             document.getElementById('live-date').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
         }, 1000);
 
+        // ===============================================
+        // LOGIKA PEMUTAR MUSIK LATAR & TRAILER
+        // ===============================================
+        var bgMusic = document.getElementById("bg-music");
+        var musicIcon = document.getElementById("musicIcon");
+        var isMusicPlaying = false;
+
+        // Fungsi manual menyalakan/mematikan musik dari tombol
+        function toggleMusic() {
+            if(isMusicPlaying) {
+                bgMusic.pause();
+                musicIcon.classList.remove('fa-volume-high');
+                musicIcon.classList.add('fa-volume-xmark');
+                isMusicPlaying = false;
+            } else {
+                bgMusic.play().then(() => {
+                    musicIcon.classList.remove('fa-volume-xmark');
+                    musicIcon.classList.add('fa-volume-high');
+                    isMusicPlaying = true;
+                }).catch(err => { console.log("Gagal memutar musik otomatis"); });
+            }
+        }
+
+        // Fitur menyalakan musik otomatis saat pertama kali user klik layarnya
+        window.addEventListener('click', function initAudio() {
+            if(!isMusicPlaying) {
+                toggleMusic();
+            }
+            window.removeEventListener('click', initAudio);
+        }, {once: true});
+
+
         function playTrailer(judul, ytId) {
             document.getElementById('trailerTitle').innerText = 'Trailer: ' + judul;
             document.getElementById('trailerIframe').src = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1';
+            
+            // JEDA MUSIK LATAR SAAT TRAILER DIBUKA (Cerdas!)
+            if(isMusicPlaying) { 
+                bgMusic.pause(); 
+            }
+
             var trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
             trailerModal.show();
         }
-        document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () { document.getElementById('trailerIframe').src = ''; });
 
+        document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () { 
+            document.getElementById('trailerIframe').src = ''; 
+            
+            // LANJUTKAN MUSIK LATAR SAAT TRAILER DITUTUP
+            if(isMusicPlaying) { 
+                bgMusic.play(); 
+            }
+        });
+
+        // DATA JADWAL
         const jadwalData = [
             { judul: "FAST X", poster: "img/fast.jpg", durasi: "2h 21m", rating: "13+", tipe: "2D", studio: "Studio 1", harga: 40000, jam: ["12:15", "14:40", "17:05", "19:30"], advance: false, trailer: "32RAq6LSotU" },
             { judul: "JOHN WICK: CHAPTER 4", poster: "img/johnwick.jpg", durasi: "2h 49m", rating: "17+", tipe: "2D", studio: "Studio 2", harga: 40000, jam: ["12:00", "15:10", "18:20", "21:30"], advance: false, trailer: "qEVUtrk8_B4" },
@@ -549,12 +614,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-ticket ms-2"></i>'; btnProses.disabled = false;
                 if(data.success) {
                     alert(`TRANSAKSI BERHASIL!\nTiket dicetak untuk kursi: ${kursiDipilih.join(', ')}.\nTotal Pembayaran: Rp ${new Intl.NumberFormat('id-ID').format(payload.total)}`);
-                    
-                    // Kembalikan ke halaman awal setelah beli sesuai role
                     let defaultView = '<?php echo $role == 'admin' ? 'view-dashboard' : 'view-jadwal'; ?>';
                     let menuIndex = '<?php echo $role == 'admin' ? '.menu-item:nth-child(1)' : '.menu-item:nth-child(1)'; ?>';
                     switchView(defaultView, document.querySelector(menuIndex)); 
-                    
                 } else { alert("Gagal memproses tiket! Penyebab: " + data.error); }
             }).catch(err => { btnProses.innerHTML = 'PROSES TIKET <i class="fa-solid fa-ticket ms-2"></i>'; btnProses.disabled = false; alert("Terjadi kesalahan jaringan."); });
         }
@@ -613,6 +675,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 if(cFilm) { cFilm.data.labels=flLab; cFilm.data.datasets[0].data=flVal; cFilm.update(); } else { cFilm = new Chart(document.getElementById('filmChart'), { type: 'doughnut', data: { labels: flLab, datasets: [{ data: flVal, backgroundColor: ['#e50914','#d4af37','#333','#555','#111','#888'], borderWidth: 2, borderColor: '#151515' }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#888'}}} } }); }
             });
         }
+        
         fetchData(); setInterval(fetchData, 2000); 
         <?php endif; ?>
     </script>
