@@ -1,48 +1,58 @@
 <?php
-// Simpan dengan nama: login.php
 session_start();
-if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) { header("Location: index.php"); exit; }
-
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if ($_POST['username'] === 'admin' && $_POST['password'] === 'admin123') {
-        $_SESSION['logged_in'] = true; header("Location: index.php"); exit;
-    } else { $error = "Kredensial tidak valid!"; }
+// Jika tombol login ditekan
+if(isset($_POST['login'])){
+    $_SESSION['logged_in'] = true;
+    $_SESSION['username'] = htmlspecialchars($_POST['username']);
+    
+    // Sistem Multi-User Cerdas: Jika ketik 'admin', jadi admin. Sisanya jadi pelanggan.
+    if(strtolower($_POST['username']) === 'admin'){
+        $_SESSION['role'] = 'admin';
+    } else {
+        $_SESSION['role'] = 'customer';
+    }
+    header("Location: index.php");
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Cineplex Manager</title>
+    <title>Login - CinePlex HQ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070') center/cover no-repeat; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; }
-        .overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(10,10,10,0.85); z-index: 1; backdrop-filter: blur(5px); }
-        .login-box { background: linear-gradient(145deg, #1a1a1a, #0a0a0a); border: 1px solid #e50914; padding: 50px 40px; border-radius: 15px; width: 100%; max-width: 420px; z-index: 2; box-shadow: 0 0 30px rgba(229, 9, 20, 0.3); }
-        .logo-cinema { color: #e50914; font-size: 32px; font-weight: 900; text-align: center; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px;}
-        .form-control { background: rgba(255,255,255,0.05); border: 1px solid #333; color: white; padding: 12px 20px; border-radius: 8px;}
-        .form-control:focus { background: rgba(255,255,255,0.1); border-color: #e50914; color: white; box-shadow: 0 0 10px rgba(229,9,20,0.5);}
-        .btn-cinema { background: #e50914; color: white; font-weight: bold; width: 100%; padding: 12px; border: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;}
-        .btn-cinema:hover { background: #b80710; transform: scale(1.02); }
+        body { background-color: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .login-box { background: #151515; padding: 40px; border-radius: 15px; border-top: 5px solid #e50914; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .form-control { background: #000 !important; color: #fff !important; border: 1px solid #333; padding: 12px; }
+        .form-control:focus { border-color: #e50914; box-shadow: 0 0 10px rgba(229,9,20,0.3); }
+        .btn-login { background: #e50914; color: white; border: none; padding: 12px; font-weight: bold; font-size: 16px; border-radius: 8px; transition: 0.3s; }
+        .btn-login:hover { background: #b0060f; transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <div class="overlay"></div>
     <div class="login-box">
-        <div class="logo-cinema"><i class="fa-solid fa-ticket-simple me-2"></i>CinePlex HQ</div>
-        <?php if($error): ?><div class="alert alert-danger bg-danger text-white border-0 py-2 text-center"><?= $error ?></div><?php endif; ?>
-        <form method="POST">
+        <div class="text-center mb-4">
+            <i class="fa-solid fa-film" style="color: #e50914; font-size: 40px; margin-bottom: 10px;"></i>
+            <h3 class="fw-bold" style="letter-spacing: 1px;">CINEPLEX SYSTEM</h3>
+        </div>
+        
+        <div class="alert bg-dark border-secondary text-center text-muted small" style="font-size: 12px;">
+            <i class="fa-solid fa-circle-info text-warning me-1"></i> <b>SISTEM MULTI-USER AKTIF</b><br>
+            Ketik <b>admin</b> untuk akses penuh, atau ketik <b>nama bebas (daftar baru)</b> untuk akses Pengunjung.
+        </div>
+
+        <form method="POST" action="">
+            <div class="mb-3">
+                <label class="small fw-bold text-muted mb-2">Username / Nama Anda</label>
+                <input type="text" name="username" class="form-control" required placeholder="Contoh: admin atau budi...">
+            </div>
             <div class="mb-4">
-                <label class="text-white-50 mb-2 small"><i class="fa-solid fa-user me-2"></i>ID Karyawan</label>
-                <input type="text" name="username" class="form-control" placeholder="admin" required>
+                <label class="small fw-bold text-muted mb-2">Password</label>
+                <input type="password" name="password" class="form-control" required placeholder="Bebas isi apa saja...">
             </div>
-            <div class="mb-5">
-                <label class="text-white-50 mb-2 small"><i class="fa-solid fa-lock me-2"></i>Kata Sandi</label>
-                <input type="password" name="password" class="form-control" placeholder="admin123" required>
-            </div>
-            <button type="submit" class="btn-cinema">Buka Sistem Kasir</button>
+            <button type="submit" name="login" class="btn btn-login w-100"><i class="fa-solid fa-right-to-bracket me-2"></i> MASUK APLIKASI</button>
         </form>
     </div>
 </body>
