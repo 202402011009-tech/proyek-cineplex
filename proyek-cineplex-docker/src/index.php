@@ -129,12 +129,15 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         
         /* LAYOUT */
         .sidebar { width: 260px; background-color: #000; height: 100vh; padding: 20px 0; border-right: 1px solid #222; overflow-y: auto; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        
         .main-content { flex: 1; padding: 30px; height: 100vh; overflow-y: auto; position: relative; }
 
         .brand-logo { color: var(--c-red); font-size: 24px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: 1px;}
-        .menu-item { padding: 15px 25px; color: var(--text-mut); text-decoration: none; display: block; font-weight: 600; transition: 0.3s; cursor: pointer; border-left: 4px solid transparent; }
+        .menu-item { padding: 12px 25px; color: var(--text-mut); text-decoration: none; display: block; font-weight: 600; transition: 0.3s; cursor: pointer; border-left: 4px solid transparent; font-size: 14px;}
         .menu-item:hover, .menu-item.active { background: rgba(229,9,20,0.1); color: var(--c-red); border-left: 4px solid var(--c-red); }
-        .menu-item i { width: 30px; }
+        .menu-item i { width: 25px; }
 
         /* HEADER DIUBAH AGAR BISA MENAMPUNG PEMUTAR MUSIK DI TENGAH/KANAN */
         .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
@@ -152,8 +155,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         
         .chart-box { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid #222; margin-bottom: 30px; }
         .table-dark { background-color: var(--bg-card); }
-        .table-dark th { background-color: #000; border-bottom: 2px solid var(--c-red) !important; color: #ffffff !important; font-weight: bold !important; padding: 15px; font-size: 15px; }
-        .table-dark td { border-bottom: 1px solid #222; vertical-align: middle; padding: 15px; }
+        .table-dark th { background-color: #000; border-bottom: 2px solid var(--c-red) !important; color: #ffffff !important; font-weight: bold !important; padding: 15px; font-size: 14px; }
+        .table-dark td { border-bottom: 1px solid #222; vertical-align: middle; padding: 15px; font-size: 14px; }
         .badge-studio { background: #222; color: var(--c-gold); border: 1px solid var(--c-gold); padding: 5px 10px; border-radius: 4px; font-size: 12px; }
 
         /* MENU JADWAL TAYANG */
@@ -191,9 +194,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .view-section { display: none; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ========================================================
-           SPOTIFY MUSIC PLAYER STYLE (INLINE DI HEADER)
-           ======================================================== */
+        /* SPOTIFY MUSIC PLAYER STYLE (INLINE DI HEADER) */
         .spotify-player {
             width: 330px;
             background-color: rgba(24, 24, 24, 0.95); 
@@ -204,7 +205,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             padding: 10px 15px; 
             color: #fff;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            margin: 0 20px; /* Jarak agar tidak menabrak teks di kiri-kanannya */
+            margin: 0 20px;
         }
         .track-cover { width: 40px; height: 40px; border-radius: 6px; margin-right: 12px; object-fit: cover; }
         .track-title { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 0px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -220,14 +221,18 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         .playback-bar { display: flex; align-items: center; width: 100%; gap: 10px; font-size: 10px; color: #a7a7a7; font-weight: bold; }
         .progress-bar-container { flex-grow: 1; height: 4px; background-color: #535353; border-radius: 2px; position: relative; overflow: hidden; }
         .progress-bar { height: 100%; background-color: #1ed760; width: 0%; border-radius: 2px; transition: width 0.5s linear;}
+
+        /* TABS UNTUK PENGATURAN */
+        .nav-tabs { border-bottom: 1px solid #333; }
+        .nav-tabs .nav-link { color: var(--text-mut); border: none; font-weight: bold; padding: 10px 20px; }
+        .nav-tabs .nav-link:hover { color: #fff; }
+        .nav-tabs .nav-link.active { background: transparent; color: var(--c-red); border-bottom: 2px solid var(--c-red); }
     </style>
 </head>
 <body>
 
-    <!-- YOUTUBE IFRAME UNTUK MUSIK LATAR -->
     <div id="bg-music-player" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
 
-    <!-- SISI KIRI: MENU SIDEBAR -->
     <div class="sidebar">
         <div class="brand-logo"><i class="fa-solid fa-film"></i> CINEPLEX</div>
         
@@ -238,29 +243,39 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
 
         <?php if($role == 'admin'): ?>
-            <a class="menu-item active" onclick="switchView('view-dashboard', this)"><i class="fa-solid fa-chart-line"></i> Live Dashboard</a>
-            <a class="menu-item" onclick="switchView('view-jadwal', this)"><i class="fa-solid fa-calendar-days"></i> Jadwal Tayang</a>
+            <a class="menu-item active" onclick="switchView('view-dashboard', this)"><i class="fa-solid fa-chart-line"></i> Dasbor Utama</a>
+            
+            <div class="text-muted small fw-bold px-4 mt-4 mb-2" style="font-size: 11px;">KASIR & TRANSAKSI</div>
+            <a class="menu-item" onclick="switchView('view-studio', this)"><i class="fa-solid fa-ticket"></i> Kasir Tiket Manual</a>
+            <a class="menu-item" onclick="switchView('view-fnb', this)"><i class="fa-solid fa-burger"></i> Kasir Makanan (F&B)</a>
+            
+            <div class="text-muted small fw-bold px-4 mt-4 mb-2" style="font-size: 11px;">MANAJEMEN KONTEN</div>
+            <a class="menu-item" onclick="switchView('view-manajemen-film', this)"><i class="fa-solid fa-film"></i> Kelola Film</a>
+            <a class="menu-item" onclick="switchView('view-penjadwalan', this)"><i class="fa-solid fa-calendar-days"></i> Jadwal Tayang</a>
+            <a class="menu-item" onclick="switchView('view-kelola-studio', this)"><i class="fa-solid fa-couch"></i> Kelola Studio & Kursi</a>
+            <a class="menu-item" onclick="switchView('view-promo', this)"><i class="fa-solid fa-tags"></i> Harga & Promosi</a>
+            
+            <div class="text-muted small fw-bold px-4 mt-4 mb-2" style="font-size: 11px;">DATA & LAPORAN</div>
+            <a class="menu-item" onclick="switchView('view-pesanan', this)"><i class="fa-solid fa-receipt"></i> Riwayat Transaksi</a>
             <a class="menu-item" onclick="switchView('view-laporan', this)"><i class="fa-solid fa-file-invoice-dollar"></i> Laporan Keuangan</a>
-            <a class="menu-item" onclick="switchView('view-studio', this)"><i class="fa-solid fa-couch"></i> Manajemen Studio</a>
-            <a class="menu-item" onclick="switchView('view-member', this)"><i class="fa-solid fa-users"></i> Data Member</a>
-            <a class="menu-item" onclick="switchView('view-fnb', this)"><i class="fa-solid fa-burger"></i> Snack & Minuman</a>
+            <a class="menu-item" onclick="switchView('view-member', this)"><i class="fa-solid fa-users"></i> Pengguna & Akses</a>
+            
+            <div class="text-muted small fw-bold px-4 mt-4 mb-2" style="font-size: 11px;">SISTEM</div>
+            <a class="menu-item" onclick="switchView('view-pengaturan', this)"><i class="fa-solid fa-gears"></i> Konfigurasi Sistem</a>
         <?php else: ?>
             <a class="menu-item active" onclick="switchView('view-jadwal', this)"><i class="fa-solid fa-calendar-days"></i> Jadwal Tayang Film</a>
         <?php endif; ?>
         
-        <a href="?logout=true" class="menu-item text-danger mt-5"><i class="fa-solid fa-power-off"></i> Logout</a>
+        <a href="?logout=true" class="menu-item text-danger mt-5 mb-5"><i class="fa-solid fa-power-off"></i> Logout</a>
     </div>
 
-    <!-- SISI KANAN: KONTEN UTAMA -->
     <div class="main-content">
-        <!-- HEADER ATAS (MENYATU DENGAN SPOTIFY PLAYER) -->
         <div class="top-header">
             <div style="flex: 1;">
-                <h3 class="mb-0 fw-bold text-white" id="page-title"><?php echo $role == 'admin' ? 'Live Dashboard' : 'Jadwal Tayang Film'; ?></h3>
+                <h3 class="mb-0 fw-bold text-white" id="page-title"><?php echo $role == 'admin' ? 'Dasbor Utama' : 'Jadwal Tayang Film'; ?></h3>
                 <span class="text-danger small fw-bold"><i class="fa-solid fa-circle text-danger me-1" style="animation: pulse 1s infinite;"></i> CINEPLEX SYSTEM</span>
             </div>
 
-            <!-- WIDGET SPOTIFY PLAYER (DITANAM DI TENGAH HEADER) -->
             <div class="spotify-player">
                 <div class="d-flex align-items-center mb-2">
                     <img id="sp-cover" src="https://i.ytimg.com/vi/gpi25y0hLr8/mqdefault.jpg" alt="Cover" class="track-cover">
@@ -270,22 +285,17 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                     </div>
                     <i class="fa-solid fa-heart ms-2" style="color: #1ed760; font-size: 14px;"></i>
                 </div>
-                
                 <div class="d-flex flex-column align-items-center w-100">
                     <div class="control-buttons">
                         <i class="fa-solid fa-shuffle" style="color: #1ed760;"></i>
                         <i class="fa-solid fa-backward-step" onclick="prevTrack()" title="Lagu Sebelumnya"></i>
-                        <div class="play-pause-btn">
-                            <i id="play-icon" class="fa-solid fa-play"></i>
-                        </div>
+                        <div class="play-pause-btn"><i id="play-icon" class="fa-solid fa-play"></i></div>
                         <i class="fa-solid fa-forward-step" onclick="nextTrack()" title="Lagu Selanjutnya"></i>
                         <i class="fa-solid fa-repeat" style="color: #1ed760;"></i>
                     </div>
                     <div class="playback-bar">
                         <span id="music-current-time">0:00</span>
-                        <div class="progress-bar-container">
-                            <div id="music-progress" class="progress-bar"></div>
-                        </div>
+                        <div class="progress-bar-container"><div id="music-progress" class="progress-bar"></div></div>
                         <span id="music-total-time">0:00</span>
                     </div>
                 </div>
@@ -298,28 +308,140 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
 
         <?php if($role == 'admin'): ?>
-        <!-- ======================= BAGIAN KHUSUS ADMIN ======================= -->
         <div id="view-dashboard" class="view-section" style="display: block;">
             <div class="filter-group">
-                <button class="btn-filter active" onclick="setFilter('today', this)">Pendapatan Hari Ini</button>
-                <button class="btn-filter" onclick="setFilter('weekly', this)">7 Hari Terakhir</button>
-                <button class="btn-filter" onclick="setFilter('monthly', this)">1 Bulan Terakhir</button>
-                <button class="btn-filter" onclick="setFilter('yearly', this)">1 Tahun Terakhir</button>
+                <button class="btn-filter active" onclick="setFilter('today', this)">Hari Ini</button>
+                <button class="btn-filter" onclick="setFilter('weekly', this)">Mingguan</button>
+                <button class="btn-filter" onclick="setFilter('monthly', this)">Bulanan</button>
             </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="alert bg-dark border border-warning text-warning m-0 p-2" style="font-size:13px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <b>Peringatan:</b> Stok Popcorn Caramel < 10 Pcs
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert bg-dark border border-danger text-danger m-0 p-2" style="font-size:13px;">
+                        <i class="fa-solid fa-bell"></i> <b>Notifikasi:</b> 2 Pembayaran online butuh konfirmasi
+                    </div>
+                </div>
+            </div>
+
             <div class="kpi-grid">
-                <div class="kpi-card"><h6>Total Pendapatan <span id="lbl-time1" class="text-white fw-bold"></span></h6><h2 style="color:var(--c-gold);" id="kpi-rev">Rp 0</h2></div>
-                <div class="kpi-card"><h6>Total Pengunjung</h6><h2 class="text-white" id="kpi-vis">0 Orang</h2></div>
+                <div class="kpi-card"><h6>Pendapatan Kinerja <span id="lbl-time1" class="text-white fw-bold"></span></h6><h2 style="color:var(--c-gold);" id="kpi-rev">Rp 0</h2></div>
+                <div class="kpi-card"><h6>Tiket & Pengunjung</h6><h2 class="text-white" id="kpi-vis">0 Orang</h2></div>
                 <div class="kpi-card"><h6>Total Transaksi</h6><h2 class="text-white" id="kpi-trx">0 TRX</h2></div>
             </div>
             <div class="row g-4 mb-4">
-                <div class="col-lg-8"><div class="chart-box h-100"><h6 class="text-white fw-bold mb-4">PENDAPATAN STUDIO</h6><div style="height:250px;"><canvas id="studioChart"></canvas></div></div></div>
+                <div class="col-lg-8"><div class="chart-box h-100"><h6 class="text-white fw-bold mb-4">GRAFIK PERKEMBANGAN STUDIO</h6><div style="height:250px;"><canvas id="studioChart"></canvas></div></div></div>
                 <div class="col-lg-4"><div class="chart-box h-100"><h6 class="text-white fw-bold mb-4">FILM TERLARIS</h6><div style="height:250px;"><canvas id="filmChart"></canvas></div></div></div>
             </div>
-            <div class="chart-box">
-                <h6 class="text-white fw-bold mb-3">RIWAYAT TIKET TERJUAL TERAKHIR</h6>
-                <table class="table table-dark table-borderless table-hover">
-                    <thead><tr><th>Waktu</th><th>Judul Film</th><th>Studio</th><th>Lokasi</th><th>Qty</th><th>Pendapatan</th></tr></thead>
-                    <tbody id="table-body"></tbody>
+        </div>
+
+        <div id="view-manajemen-film" class="view-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0 text-white">Kelola Katalog Film</h4>
+                <button class="btn btn-danger fw-bold"><i class="fa-solid fa-plus"></i> Tambah Film Baru</button>
+            </div>
+            <div class="chart-box p-0 overflow-hidden">
+                <table class="table table-dark table-hover m-0">
+                    <thead><tr><th>Poster</th><th>Judul Film</th><th>Durasi</th><th>Genre</th><th>Batas Usia</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody>
+                        <tr><td><img src="img/fast.jpg" width="40" height="50" style="object-fit:cover; border-radius:4px;"></td><td class="fw-bold">FAST X</td><td>2h 21m</td><td>Action</td><td><span class="badge bg-warning text-dark">R13+</span></td><td><span class="badge bg-success">Sedang Tayang</span></td><td><button class="btn btn-sm btn-outline-light"><i class="fa-solid fa-pen"></i></button></td></tr>
+                        <tr><td><img src="img/sekawanlimo2.jpg" width="40" height="50" style="object-fit:cover; border-radius:4px;"></td><td class="fw-bold">SEKAWAN LIMO 2</td><td>2h 2m</td><td>Comedy/Horror</td><td><span class="badge bg-warning text-dark">R13+</span></td><td><span class="badge bg-info text-dark">Akan Datang</span></td><td><button class="btn btn-sm btn-outline-light"><i class="fa-solid fa-pen"></i></button></td></tr>
+                        <tr><td><img src="img/avengers.jpg" width="40" height="50" style="object-fit:cover; border-radius:4px; background:#333;"></td><td class="fw-bold text-muted">AVENGERS: ENDGAME</td><td>3h 1m</td><td>Action/Sci-Fi</td><td><span class="badge bg-warning text-dark">R13+</span></td><td><span class="badge bg-secondary">Arsip / Selesai</span></td><td><button class="btn btn-sm btn-outline-light"><i class="fa-solid fa-pen"></i></button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-penjadwalan" class="view-section">
+            <h4 class="fw-bold mb-4 text-white">Jadwal Tayangan Bioskop</h4>
+            <div class="row mb-3">
+                <div class="col-md-3"><input type="date" class="form-control bg-dark text-white border-secondary"></div>
+                <div class="col-md-3"><button class="btn btn-outline-danger w-100 fw-bold">Filter Tanggal</button></div>
+            </div>
+            <div class="chart-box p-0 overflow-hidden">
+                <table class="table table-dark table-hover m-0">
+                    <thead><tr><th>Jam Mulai - Selesai</th><th>Film</th><th>Studio</th><th>Kapasitas Tersedia</th><th>Aksi</th></tr></thead>
+                    <tbody>
+                        <tr><td>12:15 - 14:36</td><td class="fw-bold">FAST X</td><td>Studio 1</td><td><span class="text-success fw-bold">85 / 100 Kursi</span></td><td><button class="btn btn-sm btn-outline-warning">Blokir / Edit</button></td></tr>
+                        <tr><td>13:30 - 16:13</td><td class="fw-bold">MISSION: IMPOSSIBLE</td><td>VVIP Premiere</td><td><span class="text-danger fw-bold">2 / 20 Kursi</span></td><td><button class="btn btn-sm btn-outline-warning">Blokir / Edit</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-kelola-studio" class="view-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0 text-white">Manajemen Studio & Desain Kursi</h4>
+                <button class="btn btn-danger fw-bold"><i class="fa-solid fa-plus"></i> Tambah Studio</button>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4"><div class="kpi-card" style="border-top-color: #00a896;">
+                    <h5 class="fw-bold text-white mb-1"><i class="fa-solid fa-desktop me-2"></i> Studio 1 (Reguler)</h5>
+                    <p class="text-mut small mb-3">100 Kursi (Baris A - J)</p>
+                    <button class="btn btn-sm btn-outline-light w-100">Atur Denah Kursi</button>
+                </div></div>
+                <div class="col-md-4"><div class="kpi-card" style="border-top-color: var(--c-gold);">
+                    <h5 class="fw-bold text-warning mb-1"><i class="fa-solid fa-crown me-2"></i> VVIP Premiere</h5>
+                    <p class="text-mut small mb-3">20 Kursi Sofa (Baris A - D)</p>
+                    <button class="btn btn-sm btn-outline-light w-100">Atur Denah Kursi</button>
+                </div></div>
+            </div>
+        </div>
+
+        <div id="view-promo" class="view-section">
+            <h4 class="fw-bold mb-4 text-white">Pengaturan Harga, Diskon & Promosi</h4>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6"><div class="chart-box h-100 mb-0">
+                    <h6 class="text-white fw-bold mb-3">Harga Dasar (Base Price)</h6>
+                    <div class="d-flex justify-content-between border-bottom border-secondary pb-2 mb-2"><span>Senin - Kamis (Reguler)</span><span class="fw-bold text-gold">Rp 40.000</span></div>
+                    <div class="d-flex justify-content-between border-bottom border-secondary pb-2 mb-2"><span>Jumat - Minggu (Reguler)</span><span class="fw-bold text-gold">Rp 50.000</span></div>
+                    <div class="d-flex justify-content-between pb-2 mb-2"><span>Tiket VVIP (Semua Hari)</span><span class="fw-bold text-gold">Rp 120.000</span></div>
+                    <button class="btn btn-sm btn-outline-light mt-2">Ubah Tarif Tiket</button>
+                </div></div>
+                <div class="col-md-6"><div class="chart-box h-100 mb-0">
+                    <h6 class="text-white fw-bold mb-3">Kupon Aktif</h6>
+                    <div class="alert bg-dark border-secondary p-2 mb-2 d-flex justify-content-between align-items-center">
+                        <div><b class="text-danger">MABAR20</b><br><small class="text-muted">Diskon 20% Pelajar</small></div>
+                        <span class="badge bg-success">Aktif</span>
+                    </div>
+                    <button class="btn btn-sm btn-danger mt-2">+ Buat Kode Promo</button>
+                </div></div>
+            </div>
+        </div>
+
+        <div id="view-pesanan" class="view-section">
+            <h4 class="fw-bold mb-4 text-white">Semua Data Transaksi Tiket</h4>
+            <div class="chart-box p-0 overflow-hidden">
+                <table class="table table-dark table-hover m-0">
+                    <thead><tr><th>No. Pesanan</th><th>Tgl Beli</th><th>Pelanggan</th><th>Film (Studio)</th><th>Kursi</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody>
+                        <tr><td>#TRX-9901</td><td>20 Jun 2026</td><td>Ahmad Fathur</td><td>FAST X (Studio 1)</td><td>G4, G5</td><td>Rp 80.000</td><td><span class="badge bg-success">Berhasil</span></td><td><button class="btn btn-sm btn-outline-info"><i class="fa-solid fa-eye"></i></button></td></tr>
+                        <tr><td>#TRX-9902</td><td>20 Jun 2026</td><td>Siti Nurbaya</td><td>OPPENHEIMER (Studio 3)</td><td>C1</td><td>Rp 45.000</td><td><span class="badge bg-secondary">Digunakan</span></td><td><button class="btn btn-sm btn-outline-info"><i class="fa-solid fa-eye"></i></button></td></tr>
+                        <tr><td>#TRX-9903</td><td>20 Jun 2026</td><td>Anonim (Kasir)</td><td>JOHN WICK (Studio 2)</td><td>A1, A2</td><td>Rp 80.000</td><td><span class="badge bg-danger">Dibatalkan</span></td><td><button class="btn btn-sm btn-outline-info"><i class="fa-solid fa-eye"></i></button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-member" class="view-section">
+            <div class="chart-box" style="background: #111; border: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold m-0 text-white">Manajemen Pengguna & Staf</h4>
+                        <p class="text-muted small m-0">Atur hak akses staf dan data pelanggan bioskop.</p>
+                    </div>
+                    <button class="btn btn-danger fw-bold" data-bs-toggle="modal" data-bs-target="#tambahMemberModal">+ Tambah User</button>
+                </div>
+                <table class="table table-dark table-hover">
+                    <thead><tr><th>ID / Username</th><th>Nama Lengkap</th><th>Peran (Role) / Tingkat</th><th>Info / Poin</th><th>Status</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody id="member-table-body">
+                        <tr><td class="text-white fw-bold">admin</td><td class="text-white fw-bold">Administrator Utama</td><td><span class="badge bg-danger fw-bold">ADMIN PUSAT</span></td><td class="text-muted">Akses Penuh</td><td class="text-success fw-bold">Aktif</td><td class="text-center">-</td></tr>
+                        <tr><td class="text-white fw-bold">kasir01</td><td class="text-white fw-bold">Budi Kasir</td><td><span class="badge bg-info text-dark fw-bold">STAF KASIR</span></td><td class="text-muted">Akses Transaksi</td><td class="text-success fw-bold">Aktif</td><td class="text-center"><button class="btn btn-sm btn-outline-light"><i class="fa-solid fa-pen"></i></button></td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -327,72 +449,99 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         <div id="view-laporan" class="view-section">
             <div class="chart-box text-center py-5" style="border: none; background: #111;">
                 <i class="fa-solid fa-file-invoice-dollar mb-4" style="font-size: 60px; color: #fff;"></i>
-                <h3 class="fw-bold text-white">Modul Laporan Keuangan</h3>
-                <p class="text-white fw-bold mb-5">Cetak laporan laba rugi, rekapan tiket, dan total pendapatan secara detail.</p>
-                <button id="btn-export-pdf" class="btn btn-outline-danger me-3 px-4 py-2 fw-bold" onclick="exportPDF()">
-                    <i class="fa-solid fa-file-pdf"></i> Export PDF Laporan
-                </button>
+                <h3 class="fw-bold text-white">Modul Laporan Keuangan Khusus</h3>
+                <p class="text-white fw-bold mb-5">Unduh rekapan penjualan tiket, performa film, dan transaksi dibatalkan.</p>
+                <button id="btn-export-pdf" class="btn btn-outline-danger me-3 px-4 py-2 fw-bold" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Export Laporan Utama (PDF)</button>
+                <button class="btn btn-outline-success px-4 py-2 fw-bold"><i class="fa-solid fa-file-excel"></i> Rekap F&B (Excel)</button>
+            </div>
+        </div>
+
+        <div id="view-pengaturan" class="view-section">
+            <h4 class="fw-bold mb-4 text-white">Konfigurasi Sistem Bioskop</h4>
+            <div class="chart-box p-0">
+                <ul class="nav nav-tabs px-3 pt-3" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-profil" type="button">Profil Bioskop</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-notif" type="button">Notifikasi & Web</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-audit" type="button">Log Audit Sistem</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-legal" type="button">Keamanan & Legal</button></li>
+                </ul>
+                <div class="tab-content p-4 text-white" id="myTabContent">
+                    <div class="tab-pane fade show active" id="tab-profil">
+                        <h6 class="fw-bold text-danger">Identitas Perusahaan</h6>
+                        <input type="text" class="form-control bg-dark text-white border-secondary mb-3" value="CINEPLEX HQ INDONESIA">
+                        <textarea class="form-control bg-dark text-white border-secondary mb-3" rows="3">Jl. Panglima Sudirman No.1, Pusat Kota, Surabaya</textarea>
+                        <button class="btn btn-sm btn-outline-light">Simpan Perubahan</button>
+                    </div>
+                    <div class="tab-pane fade" id="tab-notif">
+                        <p class="text-muted">Atur banner halaman depan dan template pesan tiket (Email/WA).</p>
+                        <button class="btn btn-sm btn-outline-info">Edit Banner Web</button>
+                    </div>
+                    <div class="tab-pane fade" id="tab-audit">
+                        <p class="text-muted small">Catatan jejak aktivitas semua staf & perubahan sistem.</p>
+                        <div class="alert bg-dark text-light border-secondary py-2 m-0" style="font-size:12px; font-family:monospace;">
+                            [20:15 WIB] <b>admin</b> login ke dalam sistem.<br>
+                            [20:20 WIB] <b>admin</b> mengubah harga dasar Studio 1 menjadi Rp 40.000.<br>
+                            [21:10 WIB] <b>kasir01</b> membatalkan transaksi #TRX-9903.
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab-legal">
+                        <p class="text-muted">Atur kata sandi, batas waktu bayar (misal 15 menit), dan teks invoice.</p>
+                        <input type="number" class="form-control bg-dark text-white border-secondary mb-3 w-25" value="15" placeholder="Batas Waktu Bayar (Menit)">
+                        <button class="btn btn-sm btn-outline-danger">Ubah Syarat & Ketentuan Web</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="view-studio" class="view-section">
-            <h5 class="text-white fw-bold mb-4">Pilih studio untuk mengatur kursi dan memesan tiket:</h5>
+            <h5 class="text-white fw-bold mb-4">Kasir Pembelian Tiket Langsung (Pilih Studio):</h5>
             <div class="row g-4">
                 <script>
                     for(let i=1; i<=7; i++) {
-                        document.write(`<div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-red); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('Studio ${i}', 'TIKET REGULER MANUAL', '-', 40000, false)"><h4 class="fw-bold text-white mb-3 mt-2">Studio ${i}</h4><div class="badge bg-danger fw-bold mb-3 px-3 py-2" style="border-radius:20px; font-size:13px;">Pesan Tiket <i class="fa-solid fa-arrow-right ms-1"></i></div></div></div>`);
+                        document.write(`<div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-red); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('Studio ${i}', 'TIKET REGULER MANUAL', '-', 40000, false)"><h4 class="fw-bold text-white mb-3 mt-2">Studio ${i}</h4><div class="badge bg-danger fw-bold mb-3 px-3 py-2" style="border-radius:20px; font-size:13px;">Pilih Kursi <i class="fa-solid fa-arrow-right ms-1"></i></div></div></div>`);
                     }
                 </script>
-                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('VVIP Premiere', 'TIKET VVIP MANUAL', '-', 120000, true)"><h4 class="fw-bold text-warning mb-3 mt-2"><i class="fa-solid fa-crown"></i> VVIP Premiere</h4><div class="badge text-dark fw-bold mb-3 px-3 py-2" style="background: var(--c-gold); border-radius:20px; font-size:13px;">Pesan Tiket VIP <i class="fa-solid fa-arrow-right ms-1"></i></div></div></div>
+                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); cursor: pointer; transition: 0.2s;" onclick="bukaBooking('VVIP Premiere', 'TIKET VVIP MANUAL', '-', 120000, true)"><h4 class="fw-bold text-warning mb-3 mt-2"><i class="fa-solid fa-crown"></i> VVIP Premiere</h4><div class="badge text-dark fw-bold mb-3 px-3 py-2" style="background: var(--c-gold); border-radius:20px; font-size:13px;">Pilih Kursi VIP <i class="fa-solid fa-arrow-right ms-1"></i></div></div></div>
             </div>
         </div>
 
         <div id="view-fnb" class="view-section">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="text-white fw-bold m-0">Pemesanan Snack & Minuman (F&B)</h4>
-                <span class="badge bg-warning text-dark p-2 fw-bold">Manual Cashier</span>
+                <div>
+                    <h4 class="text-white fw-bold m-0">Konter Snack & Minuman (F&B)</h4>
+                    <p class="text-muted m-0 small">Klik tombol 'Manajemen Stok' untuk menambah item baru.</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-light btn-sm fw-bold me-2"><i class="fa-solid fa-boxes-stacked"></i> Manajemen Stok F&B</button>
+                    <span class="badge bg-warning text-dark p-2 fw-bold">Mode Kasir</span>
+                </div>
             </div>
             <div class="row g-4">
-                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);"><i class="fa-solid fa-cookie-bite" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Popcorn Caramel</h5><p class="text-mut mb-3">Rp 35.000</p><button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Caramel', 35000)">+ Tambah</button></div></div>
-                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);"><i class="fa-solid fa-bowl-food" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Popcorn Asin</h5><p class="text-mut mb-3">Rp 30.000</p><button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Asin', 30000)">+ Tambah</button></div></div>
-                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;"><i class="fa-solid fa-mug-hot" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Coca Cola (L)</h5><p class="text-mut mb-3">Rp 20.000</p><button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Coca Cola (L)', 20000)">+ Tambah</button></div></div>
-                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;"><i class="fa-solid fa-bottle-water" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Air Mineral</h5><p class="text-mut mb-3">Rp 10.000</p><button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Air Mineral', 10000)">+ Tambah</button></div></div>
+                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);"><i class="fa-solid fa-cookie-bite" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Popcorn Caramel</h5><p class="text-mut mb-3">Rp 35.000</p><button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Caramel', 35000)">+ Tambah ke Bill</button></div></div>
+                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid var(--c-gold);"><i class="fa-solid fa-bowl-food" style="font-size: 40px; color: var(--c-gold); margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Popcorn Asin</h5><p class="text-mut mb-3">Rp 30.000</p><button class="btn btn-outline-warning w-100 fw-bold" onclick="tambahFnb('Popcorn Asin', 30000)">+ Tambah ke Bill</button></div></div>
+                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;"><i class="fa-solid fa-mug-hot" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Coca Cola (L)</h5><p class="text-mut mb-3">Rp 20.000</p><button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Coca Cola (L)', 20000)">+ Tambah ke Bill</button></div></div>
+                <div class="col-md-3"><div class="kpi-card text-center" style="background: #111; border-color: #222; border-top: 3px solid #00a896;"><i class="fa-solid fa-bottle-water" style="font-size: 40px; color: #00a896; margin-bottom: 15px;"></i><h5 class="fw-bold text-white mb-2">Air Mineral</h5><p class="text-mut mb-3">Rp 10.000</p><button class="btn btn-outline-info w-100 fw-bold" onclick="tambahFnb('Air Mineral', 10000)">+ Tambah ke Bill</button></div></div>
             </div>
             <div class="booking-panel mt-5">
-                <div><h6 class="text-white fw-bold mb-1">Keranjang Anda: <span id="fnb-list" class="text-mut ms-2" style="font-weight: normal; font-size: 14px;">Belum ada pesanan</span></h6></div>
-                <div class="text-end d-flex align-items-center gap-4"><div class="text-end"><h6 class="text-white fw-bold mb-1">Total Makanan</h6><h3 class="text-gold fw-bold m-0" id="fnb-total">Rp 0</h3></div><button class="btn px-4 py-3 fw-bold" onclick="prosesFnb()" style="background: var(--c-gold); color: black; border-radius: 10px;">BAYAR PESANAN</button></div>
-            </div>
-        </div>
-
-        <div id="view-member" class="view-section">
-            <div class="chart-box" style="background: #111; border: none;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold m-0 text-white">Database Cineplex Member</h5>
-                    <button class="btn btn-danger fw-bold" style="background: #e50914; border: none;" data-bs-toggle="modal" data-bs-target="#tambahMemberModal">+ Tambah Member</button>
-                </div>
-                <table class="table table-dark table-hover">
-                    <thead><tr><th>ID Member</th><th>Nama</th><th>Tingkat</th><th>Poin Reward</th><th>Status</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="member-table-body"></tbody>
-                </table>
+                <div><h6 class="text-white fw-bold mb-1">Rincian Bill: <span id="fnb-list" class="text-mut ms-2" style="font-weight: normal; font-size: 14px;">Belum ada pesanan</span></h6></div>
+                <div class="text-end d-flex align-items-center gap-4"><div class="text-end"><h6 class="text-white fw-bold mb-1">Total Bayar</h6><h3 class="text-gold fw-bold m-0" id="fnb-total">Rp 0</h3></div><button class="btn px-4 py-3 fw-bold" onclick="prosesFnb()" style="background: var(--c-gold); color: black; border-radius: 10px;">BAYAR PESANAN</button></div>
             </div>
         </div>
 
         <div class="modal fade" id="tambahMemberModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background-color: #151515; border: 1px solid #333;">
-              <div class="modal-header border-secondary"><h5 class="modal-title text-white fw-bold">Tambah Member Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+              <div class="modal-header border-secondary"><h5 class="modal-title text-white fw-bold">Tambah Akun Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
               <div class="modal-body">
                 <div class="mb-3"><label class="text-white fw-bold small mb-2">Nama Lengkap</label><input type="text" id="inputNamaMember" class="form-control bg-dark text-white border-secondary"></div>
-                <div class="mb-3"><label class="text-white fw-bold small mb-2">Tingkat</label><select id="inputTingkatMember" class="form-select bg-dark text-white border-secondary"><option value="Bronze">Bronze</option><option value="Silver">Silver</option><option value="Gold">Gold</option></select></div>
+                <div class="mb-3"><label class="text-white fw-bold small mb-2">Role / Tingkat Akses</label><select id="inputTingkatMember" class="form-select bg-dark text-white border-secondary"><option value="Bronze">Pelanggan - Bronze</option><option value="Silver">Pelanggan - Silver</option><option value="Gold">Pelanggan - Gold</option><option value="Kasir">Staf - Kasir Khusus</option></select></div>
               </div>
-              <div class="modal-footer border-secondary"><button type="button" class="btn btn-danger fw-bold" style="background: #e50914;" onclick="simpanMemberBaru()">Simpan Member</button></div>
+              <div class="modal-footer border-secondary"><button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-danger fw-bold" style="background: #e50914;" onclick="simpanMemberBaru()">Buat Akun</button></div>
             </div>
           </div>
         </div>
         <?php endif; ?>
 
-        <!-- ======================= BAGIAN UMUM (BISA DILIHAT ADMIN & PELANGGAN) ======================= -->
-        
         <div id="view-jadwal" class="view-section" style="display: <?php echo $role == 'customer' ? 'block' : 'none'; ?>;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="text-white fw-bold m-0">Sedang Tayang di Cineplex</h4>
@@ -410,7 +559,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         </div>
 
         <div id="view-booking" class="view-section">
-            <button class="btn btn-outline-light fw-bold mb-4" onclick="switchView('view-jadwal', document.querySelector('<?php echo $role == 'admin' ? '.menu-item:nth-child(2)' : '.menu-item:nth-child(1)'; ?>'))">
+            <button class="btn btn-outline-light fw-bold mb-4" onclick="switchView('<?php echo $role == 'admin' ? 'view-studio' : 'view-jadwal'; ?>', null)">
                 <i class="fa-solid fa-arrow-left"></i> Kembali
             </button>
             <div class="d-flex justify-content-between align-items-end mb-3">
@@ -446,7 +595,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
 
     </div>
 
-    <!-- MODAL TRAILER YOUTUBE -->
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary">
@@ -503,7 +651,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             });
         }
 
-        // Musik otomatis menyala saat user klik apa saja di layar pertama kali
         window.addEventListener('click', function initAudio() {
             if(!isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') {
                 bgMusicPlayer.playVideo();
@@ -511,7 +658,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
             }
         });
 
-        // Update progress bar dan detik Spotify Widget
         setInterval(() => {
             if(isMusicPlaying && bgMusicPlayer && bgMusicPlayer.getCurrentTime) {
                 let current = bgMusicPlayer.getCurrentTime();
@@ -519,45 +665,31 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
                 if(duration > 0) {
                     let pct = (current / duration) * 100;
                     document.getElementById('music-progress').style.width = pct + '%';
-                    
                     let cMin = Math.floor(current / 60); let cSec = Math.floor(current % 60).toString().padStart(2, '0');
                     document.getElementById('music-current-time').innerText = cMin + ':' + cSec;
-                    
                     let dMin = Math.floor(duration / 60); let dSec = Math.floor(duration % 60).toString().padStart(2, '0');
                     document.getElementById('music-total-time').innerText = dMin + ':' + dSec;
                 }
             }
         }, 1000);
 
-        // FUNGSI GANTI LAGU (NEXT & PREV)
         function loadTrack(index) {
             let track = musicPlaylist[index];
             document.getElementById('sp-title').innerText = track.title;
             document.getElementById('sp-artist').innerText = track.artist;
             document.getElementById('sp-cover').src = 'https://i.ytimg.com/vi/' + track.id + '/mqdefault.jpg';
-            
-            if(bgMusicPlayer && typeof bgMusicPlayer.loadVideoById === 'function') {
-                bgMusicPlayer.loadVideoById(track.id);
-            }
+            if(bgMusicPlayer && typeof bgMusicPlayer.loadVideoById === 'function') { bgMusicPlayer.loadVideoById(track.id); }
         }
-
-        function nextTrack() {
-            currentTrackIndex++;
-            if(currentTrackIndex >= musicPlaylist.length) currentTrackIndex = 0;
-            loadTrack(currentTrackIndex);
-        }
-
-        function prevTrack() {
-            currentTrackIndex--;
-            if(currentTrackIndex < 0) currentTrackIndex = musicPlaylist.length - 1;
-            loadTrack(currentTrackIndex);
-        }
+        function nextTrack() { currentTrackIndex++; if(currentTrackIndex >= musicPlaylist.length) currentTrackIndex = 0; loadTrack(currentTrackIndex); }
+        function prevTrack() { currentTrackIndex--; if(currentTrackIndex < 0) currentTrackIndex = musicPlaylist.length - 1; loadTrack(currentTrackIndex); }
 
         // GLOBAL JS MENU
         function switchView(viewId, element) {
-            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-            if(element) element.classList.add('active');
-            if(element) document.getElementById('page-title').innerText = element.innerText.trim();
+            if(element) {
+                document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                document.getElementById('page-title').innerText = element.innerText.trim();
+            }
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
             document.getElementById(viewId).style.display = 'block';
         }
@@ -574,25 +706,16 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         function playTrailer(judul, ytId) {
             document.getElementById('trailerTitle').innerText = 'Trailer: ' + judul;
             document.getElementById('trailerIframe').src = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1';
-            
-            // Matikan lagu spotify sementara saat trailer dibuka
             if(isMusicPlaying && bgMusicPlayer && typeof bgMusicPlayer.pauseVideo === 'function') { 
-                wasPlayingBeforeTrailer = true;
-                bgMusicPlayer.pauseVideo(); 
-            } else {
-                wasPlayingBeforeTrailer = false;
-            }
-
+                wasPlayingBeforeTrailer = true; bgMusicPlayer.pauseVideo(); 
+            } else { wasPlayingBeforeTrailer = false; }
             var trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
             trailerModal.show();
         }
 
         document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () { 
             document.getElementById('trailerIframe').src = ''; 
-            // Nyalakan kembali lagu spotify otomatis
-            if(wasPlayingBeforeTrailer && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') { 
-                bgMusicPlayer.playVideo(); 
-            }
+            if(wasPlayingBeforeTrailer && bgMusicPlayer && typeof bgMusicPlayer.playVideo === 'function') { bgMusicPlayer.playVideo(); }
         });
 
         // DATA JADWAL
@@ -683,12 +806,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_data') {
         // JS KHUSUS ADMIN
         // ==========================================
         <?php if($role == 'admin'): ?>
-        let membersData = [ { id: '#MBR-9012', nama: 'Ahmad Fathur', tingkat: 'Gold', badgeColor: 'bg-warning text-dark', poin: '1,200 Pts', status: 'Aktif', statusColor: 'text-success' }, { id: '#MBR-9013', nama: 'Siti Nurbaya', tingkat: 'Silver', badgeColor: 'bg-secondary text-white', poin: '450 Pts', status: 'Aktif', statusColor: 'text-success' } ];
-        function renderMembers() { const tbody = document.getElementById('member-table-body'); tbody.innerHTML = ''; if(membersData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-white fw-bold">Data Member Kosong</td></tr>'; return; } membersData.forEach((m, index) => { tbody.innerHTML += `<tr><td class="text-white fw-bold">${m.id}</td><td class="text-white fw-bold">${m.nama}</td><td><span class="badge ${m.badgeColor} fw-bold" style="border-radius:4px; padding: 5px 10px;">${m.tingkat}</span></td><td class="text-white fw-bold">${m.poin}</td><td class="${m.statusColor} fw-bold">${m.status}</td><td class="text-center"><button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteMember(${index})"><i class="fa-solid fa-trash"></i> Hapus</button></td></tr>`; }); }
-        function deleteMember(index) { if (confirm(`Hapus member ${membersData[index].nama}?`)) { membersData.splice(index, 1); renderMembers(); } }
-        function simpanMemberBaru() { const nama = document.getElementById('inputNamaMember').value; const tingkat = document.getElementById('inputTingkatMember').value; if(nama.trim() === '') { alert("Nama member wajib diisi!"); return; } const randomId = '#MBR-' + Math.floor(Math.random() * 9000 + 1000); let badgeStyle = '', poinAwal = ''; if(tingkat === 'Bronze') { badgeStyle = 'bg-dark border border-secondary text-white'; poinAwal = '50 Pts'; } if(tingkat === 'Silver') { badgeStyle = 'bg-secondary text-white'; poinAwal = '150 Pts'; } if(tingkat === 'Gold') { badgeStyle = 'bg-warning text-dark'; poinAwal = '500 Pts'; } membersData.unshift({ id: randomId, nama: nama, tingkat: tingkat, badgeColor: badgeStyle, poin: poinAwal, status: 'Aktif', statusColor: 'text-success' }); renderMembers(); var modalInstance = bootstrap.Modal.getInstance(document.getElementById('tambahMemberModal')); modalInstance.hide(); document.getElementById('inputNamaMember').value = ''; }
-        renderMembers();
-
+        function simpanMemberBaru() { alert("Simulasi: Akun baru berhasil ditambahkan ke sistem."); var modalInstance = bootstrap.Modal.getInstance(document.getElementById('tambahMemberModal')); modalInstance.hide(); }
+        
         let fnbKeranjang = []; let fnbTotalHarga = 0;
         function tambahFnb(nama, harga) { fnbKeranjang.push(nama); fnbTotalHarga += harga; document.getElementById('fnb-list').innerText = fnbKeranjang.join(', '); document.getElementById('fnb-total').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(fnbTotalHarga); }
         function prosesFnb() { if(fnbKeranjang.length === 0) { alert("Silakan tambah Makanan terlebih dahulu!"); return; } alert(`PEMESANAN SNACK BERHASIL!\nItem: ${fnbKeranjang.join(', ')}\nTotal Pembayaran: Rp ${new Intl.NumberFormat('id-ID').format(fnbTotalHarga)}`); fnbKeranjang = []; fnbTotalHarga = 0; document.getElementById('fnb-list').innerText = 'Belum ada pesanan'; document.getElementById('fnb-total').innerText = 'Rp 0'; }
